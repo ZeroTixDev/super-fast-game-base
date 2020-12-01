@@ -51,7 +51,10 @@ module.exports = class Player {
 		// spawn in...
 		this.radius = 30
 		this.chatMsg = 'Hello'
-		this.chatTime = 100
+		this.chatDuration = 8
+		this.chatTime = 3
+		this.sendingPos = new Vector(0,0)
+		this.sendingMessage = ''
 
 		/*this.username =
       '' +
@@ -66,10 +69,10 @@ module.exports = class Player {
 		this.mass = 1
 	}
 	decodeKeys(keys) {
-  	this.keys = [...keys]
-  	for(let i = 0; i < this.keys.length; i ++) {
-  		if(this.keys[i] === true) this.pendingKeys[i] = true
-  	}
+	  	this.keys = [...keys]
+	  	for(let i = 0; i < this.keys.length; i ++) {
+	  		if(this.keys[i] === true) this.pendingKeys[i] = true
+	  	}
 	}
 
 	static getAllInitPack(players) {
@@ -92,12 +95,19 @@ module.exports = class Player {
 		return pack
 	}
 	getUpdatePack() {
-		return {
-			id: this.id,
-			pos: this.pos.round(),
-			chatTime: Math.round(this.chatTime*100)/100,
-			chatMsg: this.chatMsg,
+		const object = {id:this.id}
+		if(this.sendingPos.round().x !== this.pos.round().x || this.sendingPos.round().y !== this.pos.round().y) {
+			object.pos = this.pos.round()
+			this.sendingPos = this.pos
 		}
+		if(this.chatTime > 0) {
+			object.chatTime = Math.round(this.chatTime*100)/100
+		}
+		if(this.sendingMsg !== this.chatMsg) {
+			object.chatMsg = this.chatMsg
+			this.sendingMsg = this.chatMsg
+		}
+		return object
 	}
 	static collision({playerArray, players}) {
 		for (let i = 0; i < playerArray.length; i++) {
@@ -151,5 +161,6 @@ module.exports = class Player {
 		/*this.vel.y *= Math.pow(this.friction, delta * 60)*/
 		/*this.vel.x *= Math.pow(this.friction, delta * 60)*/
 		this.chatTime -= 1 / 60
+		if(this.chatTime <= 0) this.chatMsg = ''
 	}
 }

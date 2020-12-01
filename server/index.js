@@ -52,7 +52,7 @@ function getId() {
 function gameUpdate() {
 	tick++
 	const expectedTick = Math.ceil((Date.now() - start) / updateRate)
-	const playerArray = Object.entries({...players})
+	//const playerArray = Object.entries({...players})
 	//Player.collision({playerArray, players})
 	let pack = Player.pack({players, arena})
 	while(tick < expectedTick) {
@@ -71,7 +71,7 @@ function gameUpdate() {
 		lavaDown = true
 	}
 }
-function updateGameState(clients, players) {
+function updateGameState(clients) {
 	if(!sendPack) return
 	for (const i in clients) {
 		const clientSocket = clients[i].ws
@@ -112,7 +112,7 @@ wss.on('connection', (ws) => {
 				players[clientId].decodeKeys(data.keys)
 			} else if (data.type === 'chat') {
 				players[clientId].chatMsg = data.value
-				players[clientId].chatTime = 5
+				players[clientId].chatTime = players[clientId].chatDuration
 			}
 		} catch(err){}
 	})
@@ -122,7 +122,7 @@ wss.on('connection', (ws) => {
 	})
 })
 setInterval(() => {
-	updateGameState(clients, players)
+	updateGameState(clients)
 }, 1000 / sendRate)
 setInterval(() => {
 	gameUpdate()

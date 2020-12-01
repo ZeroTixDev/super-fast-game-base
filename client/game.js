@@ -97,7 +97,7 @@ class Player {
 		//ctx.shadowOffsetX = 0;
 		if (this.chatTime >= 0) {
 			ctx.font = '20px Verdana, Geneva, sans-serif'
-			ctx.fillStyle = `rgb(50, 50, 50, ${this.chatTime / 5})`
+			ctx.fillStyle = `rgb(50, 50, 50, ${this.chatTime / 3})`
 			// ctx.shadowColor = "white";
 			// ctx.shadowBlur = 10;
 			const width = ctx.measureText(this.chatMsg).width
@@ -107,7 +107,7 @@ class Player {
 				Math.round((width * 2) / 2 + 6),
 				30
 			)
-			ctx.fillStyle = `rgb(200, 200, 200, ${this.chatTime / 5})`
+			ctx.fillStyle = `rgb(200, 200, 200, ${this.chatTime / 3})`
 			ctx.fillText(this.chatMsg, x, Math.round(y - this.radius - 15))
 		}
 	}
