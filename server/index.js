@@ -11,7 +11,7 @@ const msgpack = require('msgpack-lite')
 const clients = {}
 const players = {}
 const arena = new Vector(1000, 1000)
-const sendRate = 10
+const sendRate = 20
 const updateRate = 60
 let lavaColor = 107
 let lavaUp = true
@@ -93,10 +93,13 @@ function updateGameState(clients, players) {
 }
 wss.on('connection', (ws) => {
 	const clientId = getId()
+	let joined = false
 	ws.on('message', (msg) => {
 		try {
 			const data = JSON.parse(msg)
 			if (data.type === 'join') {
+				if(joined) return
+				joined = true
 				clients[clientId] = {ws}
 				players[clientId] = new Player(clientId)
 				initPack.push(players[clientId].getInitPack())
