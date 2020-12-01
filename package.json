@@ -1,0 +1,24 @@
+{
+  "name": "multi-player-game-base-to-fork",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "nodemon server/index.js"
+  },
+  "dependencies": {
+    "express": "4.17.1",
+    "msgpack-lite": "^0.1.26",
+    "node-uuid": "1.4.8",
+    "ws": "7.3.1"
+  },
+  "devDependencies": {
+    "eslint": "^7.14.0",
+    "eslint-config-google": "^0.14.0",
+    "nodemon": "1.18.4"
+  },
+  "engines": {
+    "node":"12.19.0"
+  },
+  "keywords": []
+}
