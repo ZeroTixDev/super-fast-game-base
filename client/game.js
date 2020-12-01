@@ -280,9 +280,9 @@ function render() {
 	ctx.fillStyle = 'rgb(60, 60, 60, 0.8)'
 	ctx.roundRect(50, 650, 200, 200, 10)
 	const expectedTick = (window.performance.now() - start) / 60
-	simulatePlayer({player:players[selfId],arena}, keys)
+	if(!isChatting)simulatePlayer({player:players[selfId],arena}, keys)
 	while(tick < expectedTick) {
-		simulatePlayer(players[selfId], keys)
+		if(!isChatting)simulatePlayer(players[selfId], keys)
 		tick++
 	}
 	for (let i in players) {
