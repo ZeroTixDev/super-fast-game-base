@@ -47,7 +47,7 @@ module.exports = class Player {
 		this.keys = keys
 		this.pendingInputs = []
 		this.vel = new Vector(0, 0)
-		this.maxSpd = 600 * 1 / 60
+		this.maxSpd = 500 * 1 / 60
 		// spawn in...
 		this.radius = 30
 		this.chatMsg = 'Hello'
