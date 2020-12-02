@@ -57,8 +57,8 @@ class Player {
 	}
 	update(delta) {
 		if(this.id === selfId) return
- 		const time =  delta * 10
-		if (delta >= 1 / 10 ) {
+ 		const time =  delta * 15
+		if (delta >= 1 / 15 ) {
 			this.pos = this.serverState.pos
 			this.lastState.pos = this.serverState.pos
 			return
@@ -223,7 +223,6 @@ function drawMap() {
 }
 function renderChat() {
 	if (enterPressed && !chatlock) {
-		chat = true
 		isChatting = !isChatting
 		chatlock = true
 	}

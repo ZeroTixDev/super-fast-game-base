@@ -95,11 +95,12 @@ module.exports = class Player {
 		return pack
 	}
 	getUpdatePack() {
-		const object = {id:this.id}
-		if(this.sendingPos.round().x !== this.pos.round().x || this.sendingPos.round().y !== this.pos.round().y) {
+		const object = {/*id:this.id*/}
+		/*if((this.sendingPos.x !== this.pos.x) || (this.pos.y !== this.pos.y)) {
 			object.pos = this.pos.round()
 			this.sendingPos = this.pos
-		}
+		}*/
+		object.pos = this.pos.round()
 		if(this.chatTime > 0) {
 			object.chatTime = Math.round(this.chatTime*100)/100
 		}
@@ -107,7 +108,14 @@ module.exports = class Player {
 			object.chatMsg = this.chatMsg
 			this.sendingMsg = this.chatMsg
 		}
+	    object.id = this.id
 		return object
+		/*return {
+			id:this.id,
+			pos:this.pos.round(),
+			chatTime:this.chatTime,
+			chatMsg: this.chatMsg
+		}*/
 	}
 	static collision({playerArray, players}) {
 		for (let i = 0; i < playerArray.length; i++) {
