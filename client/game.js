@@ -276,7 +276,7 @@ function trackKeys(event) {
 	if(index === 2) key.left = value
 	if(index === 3) key.right = value
 	if (event.keyCode === 13) enterPressed = value
-	if(value === false && event.keyCode === 84) {
+	if(value === false && event.keyCode === 84 && !isChatting) {
 		debugMode = !debugMode
 	}
 }
