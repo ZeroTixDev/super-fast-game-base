@@ -103,9 +103,9 @@ module.exports = class Player {
 		object.pos = this.pos.round()
 		if(this.chatTime > 0) {
 			object.chatTime = Math.round(this.chatTime*100)/100
+			object.chatMsg = this.chatMsg
 		}
 		if(this.sendingMsg !== this.chatMsg) {
-			object.chatMsg = this.chatMsg
 			this.sendingMsg = this.chatMsg
 		}
 	    object.id = this.id
