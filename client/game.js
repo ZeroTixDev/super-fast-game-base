@@ -80,14 +80,14 @@ class Player {
 		ctx.beginPath()
 		ctx.arc(x, y, this.radius, 0, Math.PI * 2)
 		ctx.fill()
-		ctx.fillStyle = 'red'
+		/*ctx.fillStyle = 'red'
 		ctx.beginPath()
 		const [serverX, serverY] = [
 			Math.round(this.serverState.pos.x - players[selfId].pos.x + canvas.width / 2),
 			Math.round(this.serverState.pos.y - players[selfId].pos.y + canvas.height / 2)
 		]
 		ctx.arc(serverX, serverY, this.radius, 0, Math.PI * 2)
-		ctx.fill()
+		ctx.fill()*/
 		/*ctx.save();
     ctx.translate(x, y);
     ctx.rotate(this.rot);
