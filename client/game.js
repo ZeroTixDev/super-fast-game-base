@@ -2,7 +2,6 @@ let ws = new WebSocket(location.origin.replace(/^http/, 'ws'))
 ws.binaryType = 'arraybuffer'
 const game = document.getElementById('game')
 let players = Object.create(null)
-let keys = new Array(4).fill(false)
 const canvas = document.getElementById('canvas')
 const ctx = canvas.getContext('2d')
 const chatBox = document.getElementById('chatBox')
@@ -19,15 +18,13 @@ let lavaColor = 107
 let bytes = 0
 let tick = 0
 let updates = 0
+let debugMode = false
 const start = Date.now()
 let byteDisplay = 0
 const PLAYER_COLOR = '#242424'
 const mouse = { x: 0, y: 0 }
 let key = {left:false, right:false, up:false, down:false}
 let pendingInputs = []
-window.addEventListener('mouseout', () => {
-	keys = new Array(4).fill(false)
-})
 CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, radius) {
 	var r = x + w
 	var b = y + h
@@ -55,20 +52,26 @@ class Player {
 		this.interpBuffer = [] // {time:Date.now(), pos}
 		this.serverState = {time:Date.now(),pos:this.pos}
 		this.lastState = {time:Date.now(),pos:this.pos}
+		this.correctPosition = {pos:this.pos}
 		players[this.id] = this
 	}
 	update(delta) {
-		if(this.id === selfId) return
- 		const time =  delta * 15
-		if (delta >= 1 / 15 ) {
-			this.pos = this.serverState.pos
-			this.lastState.pos = this.serverState.pos
-			return
+		if(this.id !== selfId) {
+	 		const time =  delta * 15
+			if (delta >= 1 / 15 ) {
+				this.pos = this.serverState.pos
+				this.lastState.pos = this.serverState.pos
+				return
+			}
+			this.lastState.pos.x = lerp(this.lastState.pos.x, this.serverState.pos.x, time)
+			this.lastState.pos.y = lerp(this.lastState.pos.y, this.serverState.pos.y, time)
+			this.pos.x = lerp(this.pos.x, this.lastState.pos.x, time)
+			this.pos.y = lerp(this.pos.y, this.lastState.pos.y, time)
+		} else {
+			const time = delta * 0.8
+			this.pos.x = lerp(this.pos.x, this.correctPosition.pos.x, time)
+			this.pos.y = lerp(this.pos.y, this.correctPosition.pos.y, time)
 		}
-		this.lastState.pos.x = lerp(this.lastState.pos.x, this.serverState.pos.x, time)
-		this.lastState.pos.y = lerp(this.lastState.pos.y, this.serverState.pos.y, time)
-		this.pos.x = lerp(this.pos.x, this.lastState.pos.x, time)
-		this.pos.y = lerp(this.pos.y, this.lastState.pos.y, time)
 	}
 	draw() {
 		const [x, y] = [
@@ -80,14 +83,25 @@ class Player {
 		ctx.beginPath()
 		ctx.arc(x, y, this.radius, 0, Math.PI * 2)
 		ctx.fill()
-		/*ctx.fillStyle = 'red'
-		ctx.beginPath()
-		const [serverX, serverY] = [
-			Math.round(this.serverState.pos.x - players[selfId].pos.x + canvas.width / 2),
-			Math.round(this.serverState.pos.y - players[selfId].pos.y + canvas.height / 2)
-		]
-		ctx.arc(serverX, serverY, this.radius, 0, Math.PI * 2)
-		ctx.fill()*/
+		if(debugMode && this.id === selfId) {
+			ctx.fillStyle = 'red'
+			ctx.beginPath()
+			const [serverX, serverY] = [
+				Math.round(this.serverState.pos.x - players[selfId].pos.x + canvas.width / 2),
+				Math.round(this.serverState.pos.y - players[selfId].pos.y + canvas.height / 2)
+			]
+			ctx.arc(serverX, serverY, this.radius, 0, Math.PI * 2)
+			ctx.fill()
+		}else if(debugMode) {
+			ctx.fillStyle = 'blue'
+			ctx.beginPath()
+			const [correctX, correctY] = [
+				Math.round(this.lastState.pos.x - players[selfId].pos.x + canvas.width / 2),
+				Math.round(this.lastState.pos.y - players[selfId].pos.y + canvas.height / 2)
+			]
+			ctx.arc(correctX, correctY, this.radius, 0, Math.PI * 2)
+			ctx.fill()
+		}
 		/*ctx.save();
     ctx.translate(x, y);
     ctx.rotate(this.rot);
@@ -155,16 +169,19 @@ function recon(data,player) {
 			pendingInputs.splice(i, 1)
 		}
 	}
-	/*const old = players[selfId]
-	const copy = {pos:old.pos,vel:old.vel,maxSpd:old.maxSpd, radius:old.radius}
+	const copy = {pos:data.pos,vel:{x:0,y:0},radius:players[selfId].radius,maxSpd:players[selfId].maxSpd}
 	for(let i = 0; i < pendingInputs.length; i++) {
 		simulatePlayer({player:copy, arena}, pendingInputs[i].input)
 	}
-	players[selfId] = old
-	if(Math.abs(copy.pos.x - player.pos.x) > 1 || Math.abs(copy.pos.y - copy.pos.y) > 1) {
+	/*if(Math.abs(copy.pos.x - player.pos.x) > 1 || Math.abs(copy.pos.y - copy.pos.y) > 1) {
 		player.pos = copy.pos
 		console.log('teleport', 'old',player.pos,'new',copy.pos)
 	}*/
+	//if(dist(player.pos.x,player.pos.y,copy.pos.x,copy.pos.y) > players[selfId].radius * 2) player.pos = copy.pos
+	player.correctPosition.pos = copy.pos
+}
+function dist(x1,y1,x2,y2) {
+	return Math.sqrt(Math.pow(x2-x1,2) + Math.pow(y2-y1,2))
 }
 ws.addEventListener('message', (datas) => {
 	const msg = msgpack.decode(new Uint8Array(datas.data))
@@ -259,6 +276,9 @@ function trackKeys(event) {
 	if(index === 2) key.left = value
 	if(index === 3) key.right = value
 	if (event.keyCode === 13) enterPressed = value
+	if(value === false && event.keyCode === 84) {
+		debugMode = !debugMode
+	}
 }
 function drawMap() {
 	ctx.fillStyle = 'rgb(40,40,40)'
@@ -317,11 +337,11 @@ let lastTime = Date.now()
 function loop()  {
 	const delta = (Date.now() - lastTime) / 1000
 	lastTime = Date.now()
-	update()
-	render(delta)
+	update(delta)
+	render()
 	requestAnimationFrame(loop)
 }
-function update() {
+function update(delta) {
 	if (!selfId || !players[selfId]) return
 	if(isChatting && (key.left === true || key.right === true || key.up === true || key.down === true)) key = {left:false, right:false, up:false, down:false}
 	const expectedTick = Math.ceil((Date.now() - start) * 0.06)
@@ -337,8 +357,12 @@ function update() {
 		tick++
 		updates++
 	}
+	for(let i in players) {
+		const player = players[i]
+		player.update(delta)
+	}
 }
-function render(delta) {
+function render() {
 	if (!selfId || !players[selfId]) return
 	renderChat()
 	drawMap()
@@ -347,7 +371,6 @@ function render(delta) {
 	ctx.roundRect(50, 650, 200, 200, 10)
 	for (let i in players) {
 		const player = players[i]
-		player.update(delta)
 		renderMinimap(player)
 		player.draw()
 	}

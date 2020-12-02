@@ -1,5 +1,5 @@
 const Vector = require('./vector')
-const { simulatePlayer } = require('.././shared/simulate')
+const { simulatePlayer } = require('../.././shared/simulate')
 const randomConso = function() {
 	const index = Math.round(Math.random() * 20)
 	const consos = [
