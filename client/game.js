@@ -1,4 +1,4 @@
-const ws = new WebSocket(location.origin.replace(/^http/, 'ws'))
+let ws = new WebSocket(location.origin.replace(/^http/, 'ws'))
 ws.binaryType = 'arraybuffer'
 const game = document.getElementById('game')
 let players = Object.create(null)
@@ -18,10 +18,13 @@ let isChatting = false
 let lavaColor = 107
 let bytes = 0
 let tick = 0
-const start = window.performance.now()
+let updates = 0
+const start = Date.now()
 let byteDisplay = 0
 const PLAYER_COLOR = '#242424'
 const mouse = { x: 0, y: 0 }
+let key = {left:false, right:false, up:false, down:false}
+let pendingInputs = []
 window.addEventListener('mouseout', () => {
 	keys = new Array(4).fill(false)
 })
@@ -47,12 +50,11 @@ class Player {
 		this.id = initPack.id
 		this.chatTime = initPack.chatTime
 		this.chatMsg = initPack.chatMsg
-		this.vel = initPack.vel
+		this.vel = {x:0,y:0,}
 		this.maxSpd = initPack.maxSpd
-		this.interpBuffer = [] // {time:window.performance.now(), pos}
-		this.serverState = {time:window.performance.now(),pos:this.pos}
-		this.lastState = {time:window.performance.now(),pos:this.pos}
-		this.predictedPos = {pos:this.pos}
+		this.interpBuffer = [] // {time:Date.now(), pos}
+		this.serverState = {time:Date.now(),pos:this.pos}
+		this.lastState = {time:Date.now(),pos:this.pos}
 		players[this.id] = this
 	}
 	update(delta) {
@@ -79,13 +81,13 @@ class Player {
 		ctx.arc(x, y, this.radius, 0, Math.PI * 2)
 		ctx.fill()
 		ctx.fillStyle = 'red'
-		/*	ctx.beginPath()
+		ctx.beginPath()
 		const [serverX, serverY] = [
 			Math.round(this.serverState.pos.x - players[selfId].pos.x + canvas.width / 2),
 			Math.round(this.serverState.pos.y - players[selfId].pos.y + canvas.height / 2)
 		]
 		ctx.arc(serverX, serverY, this.radius, 0, Math.PI * 2)
-		ctx.fill()*/
+		ctx.fill()
 		/*ctx.save();
     ctx.translate(x, y);
     ctx.rotate(this.rot);
@@ -124,7 +126,7 @@ function resize() {
 }
 resize()
 window.addEventListener('resize', resize)
-window.requestAnimationFrame(render)
+window.requestAnimationFrame(loop)
 ws.onopen = () => {
 	const payload = {
 		type: 'join'
@@ -143,7 +145,27 @@ ws.onopen = () => {
 setInterval(() => {
 	byteDisplay = bytes / 1000
 	bytes = 0
+	console.log(updates,'updates per second')
+	updates = 0
 }, 1000)
+function recon(data,player) {
+	for(let i = 0; i < pendingInputs.length; i++) {
+		const input = pendingInputs[i]
+		if(input.tick < data.lastProcessedTick) {
+			pendingInputs.splice(i, 1)
+		}
+	}
+	/*const old = players[selfId]
+	const copy = {pos:old.pos,vel:old.vel,maxSpd:old.maxSpd, radius:old.radius}
+	for(let i = 0; i < pendingInputs.length; i++) {
+		simulatePlayer({player:copy, arena}, pendingInputs[i].input)
+	}
+	players[selfId] = old
+	if(Math.abs(copy.pos.x - player.pos.x) > 1 || Math.abs(copy.pos.y - copy.pos.y) > 1) {
+		player.pos = copy.pos
+		console.log('teleport', 'old',player.pos,'new',copy.pos)
+	}*/
+}
 ws.addEventListener('message', (datas) => {
 	const msg = msgpack.decode(new Uint8Array(datas.data))
 	bytes += datas.data.byteLength
@@ -169,9 +191,32 @@ ws.addEventListener('message', (datas) => {
 				const player = players[data.id]
 				if (player) {
 		          if (data.pos !== undefined) {
-		          	player.lastState = player.serverState
-		          	player.serverState.pos = data.pos
-		          	player.serverState.time = window.performance.now()
+		          	/*if(data.lastProcessedTick && selfId && arena && players[selfId] && data.id === selfId) {
+		          		for(let i = 0; i < pendingInputs.length; i++) {
+		          			const input = pendingInputs[i]
+		          			if(input.tick < data.lastProcessedTick) {
+		          				pendingInputs.splice(i, 1)
+		          			}
+		          		}
+		          		const playerCopy = {pos:players[selfId].pos,vel:players[selfId].vel, maxSpd:players[selfId].maxSpd, radius:players[selfId].radius}
+		          		for(let i = 0; i < pendingInputs.length; i++) {
+		          			simulatePlayer({player:playerCopy, arena}, pendingInputs[i].input)
+		          		}
+		          		if(Math.abs(playerCopy.pos.x - player.pos.x) > 1 || Math.abs(playerCopy.pos.y - player.pos.y) > 1) {
+		          			player.pos = playerCopy.pos
+		          			console.log('teleport', 'old',player.pos,'new',playerCopy.pos)
+		          		}
+		          		player.lastState = player.serverState
+			          	player.serverState.pos = playerCopy.pos
+			          	player.serverState.time = Date.now()
+		          	} else {*/
+		          		if(data.lastProcessedTick && selfId && arena && players[selfId] && data.id === selfId) {
+		          			recon(data, player)
+		          		}
+		             	player.lastState = player.serverState
+			          	player.serverState.pos = data.pos
+			          	player.serverState.time = Date.now()
+			        //  }
 		          }
 		          if (data.chatTime !== undefined) {
 		            player.chatTime = data.chatTime
@@ -181,9 +226,6 @@ ws.addEventListener('message', (datas) => {
 		          }
 		           if (data.maxSpd !== undefined) {
 		            player.maxSpd = data.maxSpd
-		          }
-		           if (data.vel !== undefined) {
-		            player.vel = data.vel
 		          }
 		        }
 			}
@@ -208,10 +250,15 @@ function trackKeys(event) {
   39 right
   40 down
   */
-	if (index > -1) {
+	/*if (index > -1) {
 		keys[index] = event.type === 'keydown'
-	}
-	if (event.keyCode === 13) enterPressed = event.type === 'keydown'
+	}*/
+	const value = event.type === 'keydown'
+	if(index === 0) key.up = value
+	if(index === 1) key.down = value
+	if(index === 2) key.left = value
+	if(index === 3) key.right = value
+	if (event.keyCode === 13) enterPressed = value
 }
 function drawMap() {
 	ctx.fillStyle = 'rgb(40,40,40)'
@@ -266,24 +313,38 @@ function renderMinimap(player) {
 	)
 	ctx.fill()
 }
-let lastTime = window.performance.now()
-function render() {
-	window.requestAnimationFrame(render)
-	tick++
+let lastTime = Date.now()
+function loop()  {
+	const delta = (Date.now() - lastTime) / 1000
+	lastTime = Date.now()
+	update()
+	render(delta)
+	requestAnimationFrame(loop)
+}
+function update() {
+	if (!selfId || !players[selfId]) return
+	if(isChatting && (key.left === true || key.right === true || key.up === true || key.down === true)) key = {left:false, right:false, up:false, down:false}
+	const expectedTick = Math.ceil((Date.now() - start) * 0.06)
+	while(tick < expectedTick) {
+		const payload = {
+			type: 'input',
+			input:key,
+			tick,
+		}
+		ws.send(JSON.stringify(payload))
+	   simulatePlayer({player:players[selfId], arena}, key)
+		pendingInputs.push({input:key, tick})
+		tick++
+		updates++
+	}
+}
+function render(delta) {
 	if (!selfId || !players[selfId]) return
 	renderChat()
 	drawMap()
 	renderLava()
-	const delta = (window.performance.now() - lastTime) / 1000
-	lastTime = window.performance.now()
 	ctx.fillStyle = 'rgb(60, 60, 60, 0.8)'
 	ctx.roundRect(50, 650, 200, 200, 10)
-	const expectedTick = (window.performance.now() - start) / 60
-	if(!isChatting)simulatePlayer({player:players[selfId],arena}, keys)
-	while(tick < expectedTick) {
-		if(!isChatting)simulatePlayer(players[selfId], keys)
-		tick++
-	}
 	for (let i in players) {
 		const player = players[i]
 		player.update(delta)
@@ -293,13 +354,6 @@ function render() {
 	ctx.fillStyle = 'black'
 	ctx.font = '30px Arial'
 	ctx.fillText(`${byteDisplay} kbps`, 1500, 800)
-	if (!isChatting) {
-		const payload = {
-			type: 'keyUpdate',
-			keys: keys
-		}
-		ws.send(JSON.stringify(payload))
-	}
 }
 function lerp(a, b, t){
 	return (1 - t) * a + t * b

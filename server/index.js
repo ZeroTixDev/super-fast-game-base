@@ -20,6 +20,7 @@ let initPack = []
 let removePack = []
 let sendPack = null
 let tick = 0
+let updates = 0
 const start = Date.now()
 app.use(express.static('client'))
 app.use(express.static('shared'))
@@ -108,8 +109,8 @@ wss.on('connection', (ws) => {
 					initPack: [...Player.getAllInitPack(players)],
 					arena,
 				}))
-			} else if (data.type === 'keyUpdate') {
-				players[clientId].decodeKeys(data.keys)
+			} else if (data.type === 'input') {
+				players[clientId].decodeKeys(data.input, data.tick)
 			} else if (data.type === 'chat') {
 				players[clientId].chatMsg = data.value
 				players[clientId].chatTime = players[clientId].chatDuration

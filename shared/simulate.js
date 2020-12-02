@@ -1,11 +1,11 @@
 function simulatePlayer(state, input) {
 	// state {players, arena}
 	const player = state.player
-	if (input[0]) player.vel.y = -player.maxSpd
-	else if (input[1]) player.vel.y = player.maxSpd
+	if (input.up) player.vel.y = -player.maxSpd
+	else if (input.down) player.vel.y = player.maxSpd
 	else player.vel.y = 0
-	if (input[2]) player.vel.x = -player.maxSpd
-	else if (input[3]) player.vel.x = player.maxSpd
+	if (input.left) player.vel.x = -player.maxSpd
+	else if (input.right) player.vel.x = player.maxSpd
 	else player.vel.x = 0
 	player.pos.x += player.vel.x
 	player.pos.y += player.vel.y

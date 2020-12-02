@@ -45,34 +45,23 @@ module.exports = class Player {
 		this.pos = pos
 		this.mvt = new Vector(0, 0)
 		this.keys = keys
-		this.pendingKeys = keys
+		this.pendingInputs = []
 		this.vel = new Vector(0, 0)
-		this.maxSpd = 6
+		this.maxSpd = 600 * 1 / 60
 		// spawn in...
 		this.radius = 30
 		this.chatMsg = 'Hello'
-		this.chatDuration = 8
+		this.chatDuration = 7
 		this.chatTime = 3
 		this.sendingPos = new Vector(0,0)
 		this.sendingMessage = ''
-
-		/*this.username =
-      '' +
-      randomConso().toUpperCase() +
-      randomVowel() +
-      randomConso() +
-      randomVowel() +
-      randomConso() +
-      randomVowel() +
-      randomConso()*/
 		this.friction = 0.82
-		this.mass = 1
+		this.lastProcessedTick = 0
 	}
-	decodeKeys(keys) {
-	  	this.keys = [...keys]
-	  	for(let i = 0; i < this.keys.length; i ++) {
-	  		if(this.keys[i] === true) this.pendingKeys[i] = true
-	  	}
+	decodeKeys(input, tick) {
+		this.lastProcessedTick = tick
+	  	this.input = input
+	  	this.pendingInputs.push(this.input)
 	}
 
 	static getAllInitPack(players) {
@@ -108,6 +97,7 @@ module.exports = class Player {
 		if(this.sendingMsg !== this.chatMsg) {
 			this.sendingMsg = this.chatMsg
 		}
+		object.lastProcessedTick = this.lastProcessedTick
 	    object.id = this.id
 		return object
 		/*return {
@@ -156,16 +146,13 @@ module.exports = class Player {
 			chatTime: Math.round(this.chatTime*100)/100,
 			chatMsg: this.chatMsg,
 			maxSpd: this.maxSpd,
-			vel:this.vel,
-		}
+ 		}
 	}
 	update(arena) {
-		if(this.pendingKeys[0]) this.keys[0] = true
-		if(this.pendingKeys[1]) this.keys[1] = true
-		if(this.pendingKeys[2]) this.keys[2] = true
-		if(this.pendingKeys[3]) this.keys[3] = true
-		simulatePlayer({player:this,arena}, this.keys)
-		this.pendingKeys = [false, false, false, false]
+		while(this.pendingInputs.length >= 1) {
+			simulatePlayer({player:this,arena}, this.pendingInputs[0])
+			this.pendingInputs.shift()
+		}
 		/*this.vel.y *= Math.pow(this.friction, delta * 60)*/
 		/*this.vel.x *= Math.pow(this.friction, delta * 60)*/
 		this.chatTime -= 1 / 60
