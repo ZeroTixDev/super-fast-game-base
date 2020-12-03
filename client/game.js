@@ -169,7 +169,7 @@ setInterval(() => {
 function recon(data,player) {
 	for(let i = 0; i < pendingInputs.length; i++) {
 		const input = pendingInputs[i]
-		if(input.tick < data.lastProcessedTick) {
+		if(input.tick < data.lastProcessedTick - 1) {
 			pendingInputs.splice(i, 1)
 			reconCheck.splice(i, 1)
 		}
