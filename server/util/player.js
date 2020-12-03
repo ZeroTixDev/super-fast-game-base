@@ -59,9 +59,8 @@ module.exports = class Player {
 		this.lastProcessedTick = 0
 	}
 	decodeKeys(input, tick) {
-		this.lastProcessedTick = tick
 	  	this.input = input
-	  	this.pendingInputs.push(this.input)
+	  	this.pendingInputs.push({input:this.input, tick})
 	}
 
 	static getAllInitPack(players) {
@@ -150,7 +149,8 @@ module.exports = class Player {
 	}
 	update(arena) {
 		while(this.pendingInputs.length >= 1) {
-			simulatePlayer({player:this,arena}, this.pendingInputs[0])
+			simulatePlayer({player:this,arena}, this.pendingInputs[0].input)
+			if(this.pendingInputs.length === 1) this.lastProcessedTick = this.pendingInputs[0].tick
 			this.pendingInputs.shift()
 		}
 		/*this.vel.y *= Math.pow(this.friction, delta * 60)*/

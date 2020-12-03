@@ -25,6 +25,8 @@ const PLAYER_COLOR = '#242424'
 const mouse = { x: 0, y: 0 }
 let key = {left:false, right:false, up:false, down:false}
 let pendingInputs = []
+let pendingMessages = []
+let reconCheck = []
 CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, radius) {
 	var r = x + w
 	var b = y + h
@@ -68,9 +70,11 @@ class Player {
 			this.pos.x = lerp(this.pos.x, this.lastState.pos.x, time)
 			this.pos.y = lerp(this.pos.y, this.lastState.pos.y, time)
 		} else {
-			const time = delta * 0.8
-			this.pos.x = lerp(this.pos.x, this.correctPosition.pos.x, time)
-			this.pos.y = lerp(this.pos.y, this.correctPosition.pos.y, time)
+			const distance = dist(this.pos.x,this.pos.y,this.correctPosition.pos.x,this.correctPosition.pos.y)
+			const time = delta * ((distance === 0 ? 0.0001 : distance)) * 0.001
+			//console.log(time)
+			//this.pos.x = lerp(this.pos.x, this.correctPosition.pos.x, time)
+			//this.pos.y = lerp(this.pos.y, this.correctPosition.pos.y, time)
 		}
 	}
 	draw() {
@@ -167,73 +171,61 @@ function recon(data,player) {
 		const input = pendingInputs[i]
 		if(input.tick < data.lastProcessedTick) {
 			pendingInputs.splice(i, 1)
+			reconCheck.splice(i, 1)
 		}
 	}
 	const copy = {pos:data.pos,vel:{x:0,y:0},radius:players[selfId].radius,maxSpd:players[selfId].maxSpd}
 	for(let i = 0; i < pendingInputs.length; i++) {
-		simulatePlayer({player:copy, arena}, pendingInputs[i].input)
+		if(reconCheck[i]) {
+			reconCheck[i] = true
+			simulatePlayer({player:copy, arena}, pendingInputs[i].input)
+		}
 	}
+	simulatePlayer({player:copy, arena}, key)
+	copy.pos = {x:Math.round(copy.pos.x),y:Math.round(copy.pos.y)}
+	//player.correctPosition.pos = copy.pos
+	if(dist(player.pos.x, player.pos.y, copy.pos.x, copy.pos.y) > 1) {
+		player.pos = copy.pos
+	}
+	//if(tick % 10 === 0) console.log(player.pos, player.correctPosition.pos)
 	/*if(Math.abs(copy.pos.x - player.pos.x) > 1 || Math.abs(copy.pos.y - copy.pos.y) > 1) {
 		player.pos = copy.pos
 		console.log('teleport', 'old',player.pos,'new',copy.pos)
 	}*/
 	//if(dist(player.pos.x,player.pos.y,copy.pos.x,copy.pos.y) > players[selfId].radius * 2) player.pos = copy.pos
-	player.correctPosition.pos = copy.pos
 }
 function dist(x1,y1,x2,y2) {
 	return Math.sqrt(Math.pow(x2-x1,2) + Math.pow(y2-y1,2))
 }
-ws.addEventListener('message', (datas) => {
-	const msg = msgpack.decode(new Uint8Array(datas.data))
-	bytes += datas.data.byteLength
-	if(msg.initPack) console.log(msg)
- 	if (msg.selfId) {
-		selfId = msg.selfId
-	}
-	if (msg.arena) {
-	  arena = msg.arena
-	}
-	if (msg.lavaColor) {
-	  lavaColor = msg.lavaColor
-	}
-	if(msg.initPack && msg.initPack.length > 0) {
-		for(let data of msg.initPack) {
-			new Player(data)
+function processMessages() {
+	for(let msg of pendingMessages) {
+		if (msg.selfId) {
+			selfId = msg.selfId
 		}
-	}
-	if(selfId && players[selfId]) {
+		if (msg.arena) {
+	  arena = msg.arena
+		}
+		if (msg.lavaColor) {
+	  lavaColor = msg.lavaColor
+		}
+		if(msg.initPack && msg.initPack.length > 0) {
+			for(let data of msg.initPack) {
+				new Player(data)
+			}
+		}
+		if(selfId && players[selfId]) {
 		//update code
-		if(msg.newData) {
-			for(let data of msg.newData) {
-				const player = players[data.id]
-				if (player) {
+			if(msg.newData) {
+				for(let data of msg.newData) {
+					const player = players[data.id]
+					if (player) {
 		          if (data.pos !== undefined) {
-		          	/*if(data.lastProcessedTick && selfId && arena && players[selfId] && data.id === selfId) {
-		          		for(let i = 0; i < pendingInputs.length; i++) {
-		          			const input = pendingInputs[i]
-		          			if(input.tick < data.lastProcessedTick) {
-		          				pendingInputs.splice(i, 1)
-		          			}
-		          		}
-		          		const playerCopy = {pos:players[selfId].pos,vel:players[selfId].vel, maxSpd:players[selfId].maxSpd, radius:players[selfId].radius}
-		          		for(let i = 0; i < pendingInputs.length; i++) {
-		          			simulatePlayer({player:playerCopy, arena}, pendingInputs[i].input)
-		          		}
-		          		if(Math.abs(playerCopy.pos.x - player.pos.x) > 1 || Math.abs(playerCopy.pos.y - player.pos.y) > 1) {
-		          			player.pos = playerCopy.pos
-		          			console.log('teleport', 'old',player.pos,'new',playerCopy.pos)
-		          		}
-		          		player.lastState = player.serverState
-			          	player.serverState.pos = playerCopy.pos
-			          	player.serverState.time = Date.now()
-		          	} else {*/
 		          		if(data.lastProcessedTick && selfId && arena && players[selfId] && data.id === selfId) {
 		          			recon(data, player)
 		          		}
 		             	player.lastState = player.serverState
 			          	player.serverState.pos = data.pos
 			          	player.serverState.time = Date.now()
-			        //  }
 		          }
 		          if (data.chatTime !== undefined) {
 		            player.chatTime = data.chatTime
@@ -245,14 +237,21 @@ ws.addEventListener('message', (datas) => {
 		            player.maxSpd = data.maxSpd
 		          }
 		        }
+				}
+			}
+		}
+		if(msg.removePack && msg.removePack.length > 0) {
+			for(let data of msg.removePack) {
+				delete players[data]
 			}
 		}
 	}
-	if(msg.removePack && msg.removePack.length > 0) {
-		for(let data of msg.removePack) {
-			delete players[data]
-		}
-	}})
+}
+ws.addEventListener('message', (datas) => {
+	const msg = msgpack.decode(new Uint8Array(datas.data))
+	bytes += datas.data.byteLength
+	pendingMessages.push(msg)
+})
 function trackKeys(event) {
 	if(!selfId || !players[selfId]) return
 	const index = [
@@ -337,6 +336,7 @@ let lastTime = Date.now()
 function loop()  {
 	const delta = (Date.now() - lastTime) / 1000
 	lastTime = Date.now()
+	processMessages()
 	update(delta)
 	render()
 	requestAnimationFrame(loop)
@@ -354,6 +354,7 @@ function update(delta) {
 		ws.send(JSON.stringify(payload))
 	   simulatePlayer({player:players[selfId], arena}, key)
 		pendingInputs.push({input:key, tick})
+		reconCheck.push(false)
 		tick++
 		updates++
 	}
