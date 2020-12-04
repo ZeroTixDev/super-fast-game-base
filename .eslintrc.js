@@ -1,25 +1,21 @@
+'use strict';
+
 module.exports = {
-	'env': {
-		'browser': true,
-		'commonjs': true,
-		'es2021': true
-	},
-	'extends': 'eslint:recommended',
-	'parserOptions': {
-		'ecmaVersion': 12
-	},
-	'rules': {
-		'indent': [
-			'error',
-			'tab'
-		],
-		'quotes': [
-			'error',
-			'single'
-		],
-		'semi': [
-			'error',
-			'never'
-		]
-	}
-}
+    root: true,
+    extends: ['eslint:recommended', 'plugin:prettier/recommended'],
+    rules: {
+        'no-constant-condition': ['error', { checkLoops: false }],
+        'no-var': 'error',
+        'prefer-const': 'error',
+        strict: ['error', 'global'],
+    },
+    globals: {},
+    parserOptions: {
+        ecmaVersion: 2020,
+    },
+    env: {
+        es6: true,
+        browser: true,
+        node: true,
+    },
+};
