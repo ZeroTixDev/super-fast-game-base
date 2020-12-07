@@ -58,7 +58,7 @@ setInterval(() => {
 function recon(data, player) {
    player.pos = data.pos;
    // apply inputs not yet received by the server
-   let j = 0;
+   /*let j = 0;
    while (j < pendingInputs.length) {
       const input = pendingInputs[j];
       if (input.tick <= data.lastProcessedTick) {
@@ -70,7 +70,7 @@ function recon(data, player) {
          simulatePlayer({ player, arena }, input.input);
          j++;
       }
-   }
+   }*/
 }
 function processMessages() {
    for (const msg of pendingMessages) {
