@@ -17,5 +17,7 @@ function simulatePlayer(state, input) {
    if (player.pos.x + player.radius > state.arena.x) player.pos.x = state.arena.x - player.radius;
    if (player.pos.y - player.radius < 0) player.pos.y = player.radius;
    if (player.pos.y + player.radius > state.arena.y) player.pos.y = state.arena.y - player.radius;
+   player.pos.x = Math.round(player.pos.x);
+   player.pos.y = Math.round(player.pos.y);
 }
 module.exports = { simulatePlayer };
