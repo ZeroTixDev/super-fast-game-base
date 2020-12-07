@@ -73,7 +73,7 @@ function recon(data, player) {
       }
    }
    player.correctPosition.pos = player.pos;
-   //player.pos = old;
+   player.pos = old;
 }
 function processMessages() {
    for (const msg of pendingMessages) {
