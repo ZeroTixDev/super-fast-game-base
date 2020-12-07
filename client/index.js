@@ -56,9 +56,10 @@ setInterval(() => {
    updates = 0;
 }, 1000);
 function recon(data, player) {
+   const old = player.pos;
    player.pos = data.pos;
    // apply inputs not yet received by the server
-   /*let j = 0;
+   let j = 0;
    while (j < pendingInputs.length) {
       const input = pendingInputs[j];
       if (input.tick <= data.lastProcessedTick) {
@@ -70,7 +71,9 @@ function recon(data, player) {
          simulatePlayer({ player, arena }, input.input);
          j++;
       }
-   }*/
+   }
+   player.correctPosition.pos = player.pos;
+   //player.pos = old;
 }
 function processMessages() {
    for (const msg of pendingMessages) {
@@ -318,7 +321,7 @@ class Player {
       ctx.arc(x, y, this.radius, 0, Math.PI * 2);
       ctx.fill();
       if (debugMode && this.id === selfId) {
-         ctx.fillStyle = 'red';
+         ctx.fillStyle = 'blue';
          ctx.beginPath();
          const [serverX, serverY] = [
             Math.round(this.serverState.pos.x - players[selfId].pos.x + canvas.width / 2),
@@ -328,7 +331,7 @@ class Player {
          ctx.fill();
       }
       if (debugMode) {
-         ctx.fillStyle = 'blue';
+         ctx.fillStyle = 'red';
          ctx.beginPath();
          const [correctX, correctY] = [
             Math.round(this.correctPosition.pos.x - players[selfId].pos.x + canvas.width / 2),
