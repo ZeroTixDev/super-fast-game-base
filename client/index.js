@@ -229,7 +229,6 @@ function update(delta) {
       };
       ws.send(JSON.stringify(payload));
       simulatePlayer({ player: players[selfId], arena }, key);
-      players[selfId].pos = { x: Math.round(players[selfId].pos.x), y: Math.round(players[selfId].pos.y) };
       pendingInputs.push({ input: key, tick });
       tick++;
       updates++;
