@@ -64,8 +64,8 @@ function recon(data, player) {
          history.splice(i, 1);
       }
    }
-   const predictedPlayerPos = history.find((object) => object.tick === data.lastProcessedTick).state.player.pos;
-   player.correctPosition.pos = predictedPlayerPos;
+   const correctPos = history.find((object) => object.tick === data.lastProcessedTick).state.player.pos;
+   player.correctPosition.pos = correctPos;
    /*if (predictedPlayerPos.x !== data.pos.x || predictedPlayerPos.y !== data.pos.y) {
       console.log('predicted object', history.find((object) => object.tick === data.lastProcessedTick).state);
       console.log('tick', tick, 'server tick', data.lastProcessedTick);
@@ -245,7 +245,7 @@ function update(delta) {
       };
       history.push({ tick, state: { player: players[selfId], arena } });
       ws.send(JSON.stringify(payload));
-      simulatePlayer({ player: players[selfId], arena }, key);
+      simulatePlayer({ players, id: selfId, arena }, key);
       pendingInputs.push({ input: key, tick });
       tick++;
       updates++;
@@ -317,11 +317,9 @@ class Player {
          this.pos.x = lerp(this.pos.x, this.lastState.pos.x, time);
          this.pos.y = lerp(this.pos.y, this.lastState.pos.y, time);
       } else {
-         /*const distance = dist(this.pos.x, this.pos.y, this.correctPosition.pos.x, this.correctPosition.pos.y);
-         const time = delta * (distance === 0 ? 0.0001 : distance) * 0.001;*/
-         //console.log(time)
-         //this.pos.x = lerp(this.pos.x, this.correctPosition.pos.x, time)
-         //this.pos.y = lerp(this.pos.y, this.correctPosition.pos.y, time)
+         const time = delta * 30;
+         this.pos.x = lerp(this.pos.x, this.correctPosition.pos.x, time);
+         this.pos.y = lerp(this.pos.y, this.correctPosition.pos.y, time);
       }
    }
    draw() {

@@ -75,8 +75,9 @@ module.exports = class Player {
    }
    static pack({ players, arena }) {
       const pack = [];
+      const playersCopy = { ...players };
       for (const i in players) {
-         players[i].update(arena);
+         players[i].update(arena, playersCopy);
          pack.push(players[i].getUpdatePack());
       }
       return pack;
@@ -139,9 +140,9 @@ module.exports = class Player {
          maxSpd: this.maxSpd,
       };
    }
-   update(arena) {
+   update(arena, players) {
       while (this.pendingInputs.length >= 1) {
-         simulatePlayer({ player: this, arena }, this.pendingInputs[0].input);
+         simulatePlayer({ players, id: this.id, arena }, this.pendingInputs[0].input);
          this.pos.round();
          if (this.pendingInputs.length === 1) this.lastProcessedTick = this.pendingInputs[0].tick;
          this.pendingInputs.shift();
