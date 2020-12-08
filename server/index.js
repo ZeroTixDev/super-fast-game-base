@@ -43,11 +43,12 @@ function gameUpdate() {
    const expectedTick = Math.ceil((Date.now() - start) / updateRate);
    //const playerArray = Object.entries({...players})
    //Player.collision({playerArray, players})
-   //let pack = Player.pack({ players, arena });
+   let pack = Player.pack({ players, arena });
    while (tick < expectedTick) {
-      sendPack = Player.pack({ players, arena });
+      pack = Player.pack({ players, arena });
       tick++;
    }
+   sendPack = pack;
    if (lavaUp) lavaColor++;
    if (lavaDown) lavaColor--;
    if (lavaDown && lavaColor < 0) {
