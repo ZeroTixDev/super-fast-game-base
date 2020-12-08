@@ -30,6 +30,7 @@ const PLAYER_COLOR = '#242424';
 const mouse = { x: 0, y: 0 };
 let key = { left: false, right: false, up: false, down: false };
 const pendingInputs = [];
+const history = [];
 let pendingMessages = [];
 let scale = resize(canvas);
 window.addEventListener('resize', () => (scale = resize(canvas)));
@@ -56,24 +57,30 @@ setInterval(() => {
    updates = 0;
 }, 1000);
 function recon(data, player) {
-   const old = player.pos;
-   player.pos = data.pos;
-   // apply inputs not yet received by the server
-   let j = 0;
-   while (j < pendingInputs.length) {
-      const input = pendingInputs[j];
-      if (input.tick <= data.lastProcessedTick) {
-         // Already processed. Its effect is already taken into account into the world update
-         // we just got, so we can drop it.
-         pendingInputs.splice(j, 1);
-      } else {
-         // Not processed by the server yet. Re-apply it.
-         simulatePlayer({ player, arena }, input.input);
-         j++;
+   for (let i = history.length - 1; i >= 0; i--) {
+      const object = history[i];
+      if (object.tick < data.lastProcessedTick) {
+         history.splice(i, 1);
       }
    }
-   player.correctPosition.pos = player.pos;
-   player.pos = old;
+   const predictedPlayerPos = history.find(({ tick }) => tick === data.lastProcessedTick).state.player.pos;
+   if (predictedPlayerPos.x !== data.pos.x || predictedPlayerPos.y !== data.pos.y) {
+      //wrong prediction,
+      player.pos = data.pos;
+      let j = 0;
+      while (j < pendingInputs.length) {
+         const input = pendingInputs[j];
+         if (input.tick <= data.lastProcessedTick) {
+            // Already processed. Its effect is already taken into account into the world update
+            // we just got, so we can drop it.
+            pendingInputs.splice(j, 1);
+         } else {
+            // Not processed by the server yet. Re-apply it.
+            simulatePlayer({ player, arena }, input.input);
+            j++;
+         }
+      }
+   }
 }
 function processMessages() {
    for (const msg of pendingMessages) {
@@ -231,6 +238,7 @@ function update(delta) {
          tick,
       };
       ws.send(JSON.stringify(payload));
+      history.push({ tick, state: { player: players[selfId], arena } });
       simulatePlayer({ player: players[selfId], arena }, key);
       pendingInputs.push({ input: key, tick });
       tick++;
