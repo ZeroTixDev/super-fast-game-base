@@ -306,8 +306,8 @@ class Player {
    }
    update(delta) {
       if (this.id !== selfId) {
-         const time = delta * 15;
-         if (delta >= 1 / 15) {
+         const time = delta * 5;
+         if (delta >= 1 / 5) {
             this.pos = this.serverState.pos;
             this.lastState.pos = this.serverState.pos;
             return;
