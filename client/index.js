@@ -64,8 +64,12 @@ function recon(data, player) {
          history.splice(i, 1);
       }
    }
-   const predictedPlayerPos = history.find(({ tick }) => tick === data.lastProcessedTick).state.player.pos;
-   if (predictedPlayerPos.x !== data.pos.x || predictedPlayerPos.y !== data.pos.y) {
+   const predictedPlayerPos = history.find((object) => object.tick === data.lastProcessedTick).state.player.pos;
+   player.correctPosition.pos = predictedPlayerPos;
+   /*if (predictedPlayerPos.x !== data.pos.x || predictedPlayerPos.y !== data.pos.y) {
+      console.log('predicted object', history.find((object) => object.tick === data.lastProcessedTick).state);
+      console.log('tick', tick, 'server tick', data.lastProcessedTick);
+      console.log('predicted', predictedPlayerPos, 'server', data.pos);
       //wrong prediction,
       player.pos = data.pos;
       let j = 0;
@@ -81,7 +85,8 @@ function recon(data, player) {
             j++;
          }
       }
-   }
+      console.log('result', player.pos);
+   }*/
 }
 function processMessages() {
    for (const msg of pendingMessages) {
@@ -238,8 +243,8 @@ function update(delta) {
          input: key,
          tick,
       };
-      ws.send(JSON.stringify(payload));
       history.push({ tick, state: { player: players[selfId], arena } });
+      ws.send(JSON.stringify(payload));
       simulatePlayer({ player: players[selfId], arena }, key);
       pendingInputs.push({ input: key, tick });
       tick++;
