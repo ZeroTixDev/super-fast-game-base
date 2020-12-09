@@ -11,6 +11,7 @@ const Vector = require('./util/vector');
 const msgpack = require('msgpack-lite');
 const { filterMessage } = require('./util/filter');
 const { getId } = require('./util/id');
+const { encode } = require('.././shared/name');
 const { validateMessage } = require('./util/message');
 const clients = {};
 const players = {};
@@ -24,6 +25,7 @@ let initPack = [];
 let removePack = [];
 let sendPack = null;
 let tick = 0;
+let lastLavaColor = 0;
 const start = Date.now();
 app.use(express.static('dist'));
 app.use(express.static('shared'));
@@ -65,12 +67,18 @@ function sendState(clients) {
    for (const i in clients) {
       const clientSocket = clients[i].ws;
       if (clientSocket.readyState === WebSocket.OPEN) {
-         const object = { lavaColor, newData: sendPack };
+         const object = Object.create(null);
+         const lavaDelta = lavaColor - lastLavaColor;
+         lastLavaColor = lavaColor;
+         object[encode('lavaColor')] = lavaDelta;
+         if (sendPack.length > 0) {
+            object[encode('newData')] = sendPack;
+         }
          if (initPack.length > 0) {
-            object.initPack = [...initPack];
+            object[encode('initPack')] = [...initPack];
          }
          if (removePack.length > 0) {
-            object.removePack = [...removePack];
+            object[encode('removePack')] = [...removePack];
          }
          clientSocket.send(msgpack.encode(object));
       }
@@ -90,15 +98,13 @@ wss.on('connection', (ws) => {
                clients[clientId] = { ws };
                players[clientId] = new Player(clientId);
                initPack.push(players[clientId].getInitPack());
-               ws.send(
-                  msgpack.encode({
-                     selfId: clientId,
-                     initPack: [...Player.getAllInitPack(players)],
-                     arena,
-                  })
-               );
-            } else if (data.type === 'input') {
-               players[clientId].decodeKeys(data.input, data.tick);
+               const object = Object.create(null);
+               object[encode('arena')] = arena;
+               object[encode('initPack')] = [...Player.getAllInitPack(players)];
+               object[encode('selfId')] = clientId;
+               ws.send(msgpack.encode(object));
+            } else if (data.inputs) {
+               players[clientId].decodeKeys(data.inputs);
             } else if (data.type === 'chat') {
                players[clientId].chatMsg = filterMessage(data.value);
                players[clientId].chatTime = players[clientId].chatDuration;

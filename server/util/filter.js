@@ -16,6 +16,8 @@ module.exports = {
          'fap',
          'dumb',
          'idiot',
+         'noob',
+         'suck',
       ];
       for (const bad of badWords) {
          message = message.replace(new RegExp(`${bad}`, 'gi'), 'BONK');

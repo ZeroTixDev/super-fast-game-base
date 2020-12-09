@@ -3,6 +3,7 @@
 require('./style.css');
 const msgpack = require('msgpack-lite');
 const resize = require('./resize');
+const { encode } = require('.././shared/name');
 const { simulatePlayer } = require('.././shared/simulate');
 const ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
 ws.binaryType = 'arraybuffer';
@@ -56,15 +57,16 @@ setInterval(() => {
    console.log(updates, 'updates per second');
    updates = 0;
 }, 1000);
-console.log('correction... v1');
+console.log('correction... v5');
 function recon(data, player) {
+   const lastProcessEncoded = encode('lastProcessedTick');
    for (let i = history.length - 1; i >= 0; i--) {
       const object = history[i];
-      if (object.tick < data.lastProcessedTick) {
+      if (object.tick < data[lastProcessEncoded]) {
          history.splice(i, 1);
       }
    }
-   const correctPos = history.find((object) => object.tick === data.lastProcessedTick).state.player.pos;
+   const correctPos = history.find((object) => object.tick === data[lastProcessEncoded]).state.player.pos;
    player.correctPosition.pos = correctPos;
    /*if (predictedPlayerPos.x !== data.pos.x || predictedPlayerPos.y !== data.pos.y) {
       console.log('predicted object', history.find((object) => object.tick === data.lastProcessedTick).state);
@@ -90,32 +92,42 @@ function recon(data, player) {
 }
 function processMessages() {
    for (const msg of pendingMessages) {
-      if (msg.selfId) {
-         selfId = msg.selfId;
+      if (tick % 40 === 0) console.log(msg);
+      const selfIdEncoded = encode('selfId');
+      if (msg[selfIdEncoded]) {
+         selfId = msg[selfIdEncoded];
       }
-      if (msg.arena) {
-         arena = msg.arena;
+      const arenaEncoded = encode('arena');
+      if (msg[arenaEncoded]) {
+         arena = msg[arenaEncoded];
       }
-      if (msg.lavaColor) {
-         lavaColor = msg.lavaColor;
+      const lavaColorEncoded = encode('lavaColor');
+      if (msg[lavaColorEncoded]) {
+         lavaColor += msg[lavaColorEncoded];
       }
-      if (msg.initPack && msg.initPack.length > 0) {
-         for (const data of msg.initPack) {
+      const initPackEncoded = encode('initPack');
+      if (msg[initPackEncoded]) {
+         for (const data of msg[initPackEncoded]) {
             new Player(data);
          }
       }
       if (selfId && players[selfId]) {
          //update code
-         if (msg.newData) {
-            for (const data of msg.newData) {
-               const player = players[data.id];
+         const newDataEncoded = encode('newData');
+         if (msg[newDataEncoded]) {
+            const idEncoded = encode('id');
+            const posEncoded = encode('pos');
+            const lastProcessEncoded = encode('lastProcessedTick');
+            for (const data of msg[newDataEncoded]) {
+               const player = players[data[idEncoded]];
                if (player) {
-                  if (data.pos !== undefined) {
-                     if (data.lastProcessedTick && selfId && arena && players[selfId] && data.id === selfId) {
+                  if (data[posEncoded] !== undefined) {
+                     if (data[lastProcessEncoded] && selfId && arena && players[selfId] && data[idEncoded] === selfId) {
                         recon(data, player);
                      }
                      player.lastState = player.serverState;
-                     player.serverState.pos = data.pos;
+                     player.serverState.pos.x += data[posEncoded].x;
+                     player.serverState.pos.y += data[posEncoded].y;
                      player.serverState.time = Date.now();
                   }
                   if (data.chatTime !== undefined) {
@@ -131,8 +143,9 @@ function processMessages() {
             }
          }
       }
-      if (msg.removePack && msg.removePack.length > 0) {
-         for (const data of msg.removePack) {
+      const removePackEncoded = encode('removePack');
+      if (msg[removePackEncoded]) {
+         for (const data of msg[removePackEncoded]) {
             delete players[data];
          }
       }
@@ -190,7 +203,7 @@ function renderChat() {
    if (isChatting) {
       chatHolder.style.display = 'block';
       chatBox.focus();
-      chatBox.setAttribute('maxlength', 120);
+      chatBox.setAttribute('maxlength', 45);
    } else {
       if (chatBox.value !== '' && chatBox.value !== '/') {
          const payLoad = {
@@ -237,18 +250,21 @@ function update(delta) {
    if (!selfId || !players[selfId]) return;
    if (isChatting) key = { left: false, right: false, up: false, down: false };
    const expectedTick = Math.ceil((Date.now() - start) * 0.06);
+   const inputs = [];
    while (tick < expectedTick) {
-      const payload = {
-         type: 'input',
-         input: key,
-         tick,
-      };
+      inputs.push({ input: key, tick });
       history.push({ tick, state: { player: players[selfId], arena } });
-      ws.send(JSON.stringify(payload));
       simulatePlayer({ players, id: selfId, arena }, key);
-      pendingInputs.push({ input: key, tick });
+      //pendingInputs.push({ input: key, tick });
       tick++;
       updates++;
+   }
+   if (inputs.length > 0) {
+      ws.send(
+         JSON.stringify({
+            inputs,
+         })
+      );
    }
    for (const i in players) {
       const player = players[i];
@@ -291,9 +307,11 @@ CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, radius) {
 };
 class Player {
    constructor(initPack) {
-      this.pos = initPack.pos;
+      const idEncoded = encode('id');
+      const posEncoded = encode('pos');
+      this.pos = initPack[posEncoded];
       this.radius = initPack.radius;
-      this.id = initPack.id;
+      this.id = initPack[idEncoded];
       this.chatTime = initPack.chatTime;
       this.chatMsg = initPack.chatMsg;
       this.vel = { x: 0, y: 0 };
