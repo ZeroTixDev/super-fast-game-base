@@ -91,7 +91,6 @@ function recon(data, player) {
 }
 function processMessages() {
    for (const msg of pendingMessages) {
-      if (tick % 40 === 0) console.log(msg);
       const selfIdEncoded = encode('selfId');
       if (msg[selfIdEncoded]) {
          selfId = msg[selfIdEncoded];
