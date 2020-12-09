@@ -356,8 +356,8 @@ class Player {
          ctx.fillStyle = 'blue';
          ctx.beginPath();
          const [serverX, serverY] = [
-            Math.round(this.serverState.pos.x - players[selfId].pos.x + canvas.width / 2),
-            Math.round(this.serverState.pos.y - players[selfId].pos.y + canvas.height / 2),
+            Math.round(this.lastState.pos.x - players[selfId].pos.x + canvas.width / 2),
+            Math.round(this.lastState.pos.y - players[selfId].pos.y + canvas.height / 2),
          ];
          ctx.arc(serverX, serverY, this.radius, 0, Math.PI * 2);
          ctx.fill();
