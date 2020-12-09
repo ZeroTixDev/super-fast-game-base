@@ -37,9 +37,8 @@ let scale = resize(canvas);
 window.addEventListener('resize', () => (scale = resize(canvas)));
 window.requestAnimationFrame(loop);
 ws.onopen = () => {
-   const payload = {
-      type: 'join',
-   };
+   const payload = Object.create(null);
+   payload[encode('type')] = 'join';
    ws.send(JSON.stringify(payload));
    window.addEventListener('keydown', trackKeys);
    window.addEventListener('keyup', trackKeys);
@@ -118,6 +117,9 @@ function processMessages() {
             const idEncoded = encode('id');
             const posEncoded = encode('pos');
             const lastProcessEncoded = encode('lastProcessedTick');
+            const chatTimeEncoded = encode('chatTime');
+            const chatMsgEncoded = encode('chatMsg');
+            const maxSpdEncoded = encode('maxSpd');
             for (const data of msg[newDataEncoded]) {
                const player = players[data[idEncoded]];
                if (player) {
@@ -130,14 +132,14 @@ function processMessages() {
                      player.serverState.pos.y += data[posEncoded].y;
                      player.serverState.time = Date.now();
                   }
-                  if (data.chatTime !== undefined) {
-                     player.chatTime = data.chatTime;
+                  if (data[chatTimeEncoded] !== undefined) {
+                     player.chatTime = data[chatTimeEncoded];
                   }
-                  if (data.chatMsg !== undefined) {
-                     player.chatMsg = data.chatMsg;
+                  if (data[chatMsgEncoded] !== undefined) {
+                     player.chatMsg = data[chatMsgEncoded];
                   }
-                  if (data.maxSpd !== undefined) {
-                     player.maxSpd = data.maxSpd;
+                  if (data[maxSpdEncoded] !== undefined) {
+                     player.maxSpd = data[maxSpdEncoded];
                   }
                }
             }
@@ -206,11 +208,10 @@ function renderChat() {
       chatBox.setAttribute('maxlength', 45);
    } else {
       if (chatBox.value !== '' && chatBox.value !== '/') {
-         const payLoad = {
-            type: 'chat',
-            value: chatBox.value,
-         };
-         ws.send(JSON.stringify(payLoad));
+         const payload = Object.create(null);
+         payload[encode('value')] = chatBox.value;
+         payload[encode('type')] = 'chat';
+         ws.send(JSON.stringify(payload));
       }
       chatHolder.style.display = 'none';
       chatBox.value = '';
@@ -260,11 +261,9 @@ function update(delta) {
       updates++;
    }
    if (inputs.length > 0) {
-      ws.send(
-         JSON.stringify({
-            inputs,
-         })
-      );
+      const object = Object.create(null);
+      object[encode('inputs')] = inputs;
+      ws.send(JSON.stringify(object));
    }
    for (const i in players) {
       const player = players[i];
@@ -309,13 +308,17 @@ class Player {
    constructor(initPack) {
       const idEncoded = encode('id');
       const posEncoded = encode('pos');
+      const chatTimeEncoded = encode('chatTime');
+      const chatMsgEncoded = encode('chatMsg');
+      const maxSpdEncoded = encode('maxSpd');
+      const radiusEncoded = encode('radius');
       this.pos = initPack[posEncoded];
-      this.radius = initPack.radius;
+      this.radius = initPack[radiusEncoded];
       this.id = initPack[idEncoded];
-      this.chatTime = initPack.chatTime;
-      this.chatMsg = initPack.chatMsg;
+      this.chatTime = initPack[chatTimeEncoded];
+      this.chatMsg = initPack[chatMsgEncoded];
       this.vel = { x: 0, y: 0 };
-      this.maxSpd = initPack.maxSpd;
+      this.maxSpd = initPack[maxSpdEncoded];
       this.interpBuffer = []; // {time:Date.now(), pos}
       this.serverState = { time: Date.now(), pos: this.pos };
       this.lastState = { time: Date.now(), pos: this.pos };

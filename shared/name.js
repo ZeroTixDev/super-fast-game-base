@@ -11,6 +11,11 @@ const pairs = {
    lastProcessedTick: 'd',
    chatTime: 'v',
    chatMsg: 'k',
+   radius: 'm',
+   maxSpd: 'o',
+   inputs: 'u',
+   type: 't',
+   value: 'q',
 };
 module.exports = {
    encode: function (name) {

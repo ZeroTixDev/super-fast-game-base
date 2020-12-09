@@ -65,9 +65,9 @@ module.exports = class Player {
       // console.log(object.pos);
       //}
       if (this.chatTime > 0) {
-         object.chatTime = Math.round(this.chatTime * 100) / 100;
+         object[encode('chatTime')] = Math.round(this.chatTime * 100) / 100;
          if (this.chatMsg.length > 0) {
-            object.chatMsg = this.chatMsg;
+            object[encode('chatMsg')] = this.chatMsg;
          }
       }
       if (Object.keys(object).length > 0) {
@@ -98,12 +98,11 @@ module.exports = class Player {
       }
    }
    getInitPack() {
-      const object = {
-         radius: this.radius,
-         chatTime: Math.round(this.chatTime * 100) / 100,
-         chatMsg: this.chatMsg,
-         maxSpd: this.maxSpd,
-      };
+      const object = Object.create(null);
+      object[encode('radius')] = this.radius;
+      object[encode('maxSpd')] = this.maxSpd;
+      object[encode('chatTime')] = Math.round(this.chatTime * 100) / 100;
+      object[encode('chatMsg')] = this.chatMsg;
       object[encode('pos')] = this.pos.round();
       object[encode('id')] = this.id;
       return object;

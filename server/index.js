@@ -93,7 +93,7 @@ wss.on('connection', (ws) => {
       try {
          const data = JSON.parse(msg);
          if (validateMessage(data, { joined, tick })) {
-            if (data.type === 'join') {
+            if (data[encode('type')] === 'join') {
                joined = true;
                clients[clientId] = { ws };
                players[clientId] = new Player(clientId);
@@ -103,10 +103,10 @@ wss.on('connection', (ws) => {
                object[encode('initPack')] = [...Player.getAllInitPack(players)];
                object[encode('selfId')] = clientId;
                ws.send(msgpack.encode(object));
-            } else if (data.inputs) {
-               players[clientId].decodeKeys(data.inputs);
-            } else if (data.type === 'chat') {
-               players[clientId].chatMsg = filterMessage(data.value);
+            } else if (data[encode('inputs')]) {
+               players[clientId].decodeKeys(data[encode('inputs')]);
+            } else if (data[encode('type')] === 'chat') {
+               players[clientId].chatMsg = filterMessage(data[encode('value')]);
                players[clientId].chatTime = players[clientId].chatDuration;
             }
          } else {
