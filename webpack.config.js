@@ -18,7 +18,7 @@ const plugins = [
 ];
 module.exports = {
    entry: './client/index.js',
-   mode: 'production',
+   mode: 'development',
    output: {
       filename: '[name].[contenthash].js',
       path: path.resolve(__dirname, 'dist'),

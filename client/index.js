@@ -189,8 +189,8 @@ function trackKeys(event) {
 function drawMap() {
    ctx.fillStyle = 'rgb(40,40,40)';
    ctx.fillRect(0, 0, canvas.width, canvas.height);
-   const x = Math.round(canvas.width / 2 - players[selfId].pos.x);
-   const y = Math.round(canvas.height / 2 - players[selfId].pos.y);
+   const x = Math.round(canvas.width / 2 - players[selfId].x);
+   const y = Math.round(canvas.height / 2 - players[selfId].y);
    ctx.fillStyle = 'rgb(210,210,210)';
    ctx.roundRect(x, y, arena.x, arena.y, 10);
 }
@@ -220,8 +220,8 @@ function renderChat() {
 }
 function renderLava() {
    const [x, y] = [
-      Math.round(arena.x / 2 - 200 - players[selfId].pos.x + canvas.width / 2),
-      Math.round(arena.y / 2 - 200 - players[selfId].pos.y + canvas.height / 2),
+      Math.round(arena.x / 2 - 200 - players[selfId].x + canvas.width / 2),
+      Math.round(arena.y / 2 - 200 - players[selfId].y + canvas.height / 2),
    ];
    ctx.fillStyle = `rgb(${lavaColor},124,37)`;
    ctx.fillRect(x, y, 400, 400);
@@ -230,8 +230,8 @@ function renderMinimap(player) {
    ctx.fillStyle = PLAYER_COLOR;
    ctx.beginPath();
    ctx.arc(
-      Math.round(55 + (player.pos.x / arena.x) * 195),
-      Math.round(655 + (player.pos.y / arena.y) * 195),
+      Math.round(55 + (player.x / arena.x) * 195),
+      Math.round(655 + (player.y / arena.y) * 195),
       4,
       0,
       Math.PI * 2
@@ -249,8 +249,9 @@ function loop() {
 }
 function update(delta) {
    if (!selfId || !players[selfId]) return;
-   if (isChatting) key = { left: false, right: false, up: false, down: false };
    const expectedTick = Math.ceil((Date.now() - start) * 0.06);
+   const simulateAmount = expectedTick - tick;
+   if (isChatting || simulateAmount > 5) key = { left: false, right: false, up: false, down: false };
    const inputs = [];
    while (tick < expectedTick) {
       inputs.push({ input: key, tick });
@@ -323,21 +324,32 @@ class Player {
       this.serverState = { time: Date.now(), pos: this.pos };
       this.lastState = { time: Date.now(), pos: this.pos };
       this.correctPosition = { pos: this.pos };
+      this.x = this.pos.x;
+      this.y = this.pos.y;
       players[this.id] = this;
    }
    update(delta) {
       if (this.id !== selfId) {
          const time = delta * 10;
          if (delta >= 1 / 10) {
-            this.pos = this.serverState.pos;
+            this.x = this.serverState.pos.x;
+            this.y = this.serverState.pos.y;
             this.lastState.pos = this.serverState.pos;
             return;
          }
          this.lastState.pos.x = lerp(this.lastState.pos.x, this.serverState.pos.x, time);
          this.lastState.pos.y = lerp(this.lastState.pos.y, this.serverState.pos.y, time);
-         this.pos.x = lerp(this.pos.x, this.lastState.pos.x, time);
-         this.pos.y = lerp(this.pos.y, this.lastState.pos.y, time);
+         this.x = lerp(this.x, this.lastState.pos.x, time);
+         this.y = lerp(this.y, this.lastState.pos.y, time);
       } else {
+         const time = delta * 10;
+         if (delta >= 1 / 10) {
+            this.x = this.pos.x;
+            this.y = this.pos.y;
+            return;
+         }
+         this.x = lerp(this.x, this.pos.x, time);
+         this.y = lerp(this.y, this.pos.y, time);
          /* const time = delta * 30;
          this.pos.x = lerp(this.pos.x, this.correctPosition.pos.x, time);
          this.pos.y = lerp(this.pos.y, this.correctPosition.pos.y, time);*/
@@ -345,8 +357,8 @@ class Player {
    }
    draw() {
       const [x, y] = [
-         Math.round(this.pos.x - players[selfId].pos.x + canvas.width / 2),
-         Math.round(this.pos.y - players[selfId].pos.y + canvas.height / 2),
+         Math.round(this.x - players[selfId].x + canvas.width / 2),
+         Math.round(this.y - players[selfId].y + canvas.height / 2),
       ];
       ctx.fillStyle = PLAYER_COLOR;
       // ctx.shadowBlur = 0;
@@ -357,8 +369,8 @@ class Player {
          ctx.fillStyle = 'blue';
          ctx.beginPath();
          const [serverX, serverY] = [
-            Math.round(this.lastState.pos.x - players[selfId].pos.x + canvas.width / 2),
-            Math.round(this.lastState.pos.y - players[selfId].pos.y + canvas.height / 2),
+            Math.round(this.lastState.pos.x - players[selfId].x + canvas.width / 2),
+            Math.round(this.lastState.pos.y - players[selfId].y + canvas.height / 2),
          ];
          ctx.arc(serverX, serverY, this.radius, 0, Math.PI * 2);
          ctx.fill();
@@ -367,8 +379,8 @@ class Player {
          ctx.fillStyle = 'red';
          ctx.beginPath();
          const [correctX, correctY] = [
-            Math.round(this.correctPosition.pos.x - players[selfId].pos.x + canvas.width / 2),
-            Math.round(this.correctPosition.pos.y - players[selfId].pos.y + canvas.height / 2),
+            Math.round(this.correctPosition.pos.x - players[selfId].x + canvas.width / 2),
+            Math.round(this.correctPosition.pos.y - players[selfId].y + canvas.height / 2),
          ];
          ctx.arc(correctX, correctY, this.radius, 0, Math.PI * 2);
          ctx.fill();

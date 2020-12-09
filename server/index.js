@@ -69,7 +69,6 @@ function sendState(clients) {
       if (clientSocket.readyState === WebSocket.OPEN) {
          const object = Object.create(null);
          const lavaDelta = lavaColor - lastLavaColor;
-         lastLavaColor = lavaColor;
          object[encode('lavaColor')] = lavaDelta;
          if (sendPack.length > 0) {
             object[encode('newData')] = sendPack;
@@ -83,6 +82,7 @@ function sendState(clients) {
          clientSocket.send(msgpack.encode(object));
       }
    }
+   lastLavaColor = lavaColor;
    initPack = [];
    removePack = [];
 }
