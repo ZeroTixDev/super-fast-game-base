@@ -127,8 +127,9 @@ function processMessages() {
                         recon(data, player);
                      }
                      player.lastState = player.serverState;
-                     player.serverState.pos.x += data[posEncoded].x;
-                     player.serverState.pos.y += data[posEncoded].y;
+                     /* player.serverState.pos.x += data[posEncoded].x;
+                     player.serverState.pos.y += data[posEncoded].y;*/
+                     player.serverState.pos = data[posEncoded];
                      player.serverState.time = Date.now();
                   }
                   if (data[chatTimeEncoded] !== undefined) {

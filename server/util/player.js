@@ -57,9 +57,10 @@ module.exports = class Player {
       const object = Object.create(null);
       // if (this.pos.delta(this.sendingPos) > 1) {
       if (!this.pos.round().equal(this.sendingPos)) {
-         object[encode('pos')] = this.pos.round().delta(this.sendingPos.round()).round();
-         this.sendingPos.x += object[encode('pos')].x;
-         this.sendingPos.y += object[encode('pos')].y;
+         object[encode('pos')] = this.pos.round(); //.delta(this.sendingPos.round()).round();
+         /*this.sendingPos.x += object[encode('pos')].x;
+         this.sendingPos.y += object[encode('pos')].y;*/
+         this.sendingPos = object[encode('pos')];
          object[encode('lastProcessedTick')] = this.lastProcessedTick;
       }
       // console.log(object.pos);
