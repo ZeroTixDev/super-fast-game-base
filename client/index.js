@@ -337,9 +337,9 @@ class Player {
          this.pos.x = lerp(this.pos.x, this.lastState.pos.x, time);
          this.pos.y = lerp(this.pos.y, this.lastState.pos.y, time);
       } else {
-         const time = delta * 30;
+         /* const time = delta * 30;
          this.pos.x = lerp(this.pos.x, this.correctPosition.pos.x, time);
-         this.pos.y = lerp(this.pos.y, this.correctPosition.pos.y, time);
+         this.pos.y = lerp(this.pos.y, this.correctPosition.pos.y, time);*/
       }
    }
    draw() {
