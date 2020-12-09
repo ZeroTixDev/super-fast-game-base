@@ -21,6 +21,8 @@ module.exports = class Vector {
       return vector.x === this.x && vector.y === this.y;
    }
    delta(vector) {
-      return new Vector(this.x - vector.x, this.y - vector.y);
+      const deltaX = this.x - vector.x;
+      const deltaY = this.y - vector.y;
+      return new Vector(this.x > vector.x ? deltaX : -deltaX, this.y > vector.y ? -deltaY : deltaY);
    }
 };
