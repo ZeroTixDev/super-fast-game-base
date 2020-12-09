@@ -56,13 +56,13 @@ module.exports = class Player {
    getUpdatePack() {
       const object = Object.create(null);
       // if (this.pos.delta(this.sendingPos) > 1) {
-      if (!this.pos.round().equal(this.sendingPos)) {
-         object[encode('pos')] = this.pos.round(); //.delta(this.sendingPos.round()).round();
-         /*this.sendingPos.x += object[encode('pos')].x;
+      //if (!this.pos.round().equal(this.sendingPos)) {
+      object[encode('pos')] = this.pos.round(); //.delta(this.sendingPos.round()).round();
+      /*this.sendingPos.x += object[encode('pos')].x;
          this.sendingPos.y += object[encode('pos')].y;*/
-         this.sendingPos = object[encode('pos')];
-         object[encode('lastProcessedTick')] = this.lastProcessedTick;
-      }
+      //  this.sendingPos = object[encode('pos')];
+      object[encode('lastProcessedTick')] = this.lastProcessedTick;
+      //     }
       // console.log(object.pos);
       //}
       if (this.chatTime > 0) {
