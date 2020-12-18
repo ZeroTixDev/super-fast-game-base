@@ -5,8 +5,11 @@ const msgpack = require('msgpack-lite');
 const resize = require('./resize');
 const { encode } = require('.././shared/name');
 const { simulatePlayer } = require('.././shared/simulate');
-const ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
+let ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
 ws.binaryType = 'arraybuffer';
+ws.onclose = function () {
+   reconnect();
+};
 const game = document.getElementById('game');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -56,7 +59,7 @@ setInterval(() => {
    console.log(updates, 'updates per second');
    updates = 0;
 }, 1000);
-console.log('correction... v5');
+console.log('correction... 65');
 function recon(data, player) {
    const lastProcessEncoded = encode('lastProcessedTick');
    const posEncoded = encode('pos');
@@ -83,8 +86,8 @@ function recon(data, player) {
          j++;
       }
    }
-   players[selfId].pos.x = lerp(oldPos.x, players[selfId].pos.x, 0.4);
-   players[selfId].pos.y = lerp(oldPos.y, players[selfId].pos.y, 0.4);
+   players[selfId].pos.x = lerp(oldPos.x, players[selfId].pos.x, 0.7);
+   players[selfId].pos.y = lerp(oldPos.y, players[selfId].pos.y, 0.7);
    if (Math.random() > 0.85) console.log(pendingInputs.length);
    /* let j = 0;
    while (j < pendingInputs.length) {
@@ -121,6 +124,17 @@ function recon(data, player) {
       }
       console.log('result', player.pos);
    }*/
+}
+function reconnect() {
+   const interval = setInterval(() => {
+      ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
+      ws.binaryType = 'arraybuffer';
+      console.log('attempting to reconnect');
+      ws.onopen = function () {
+         console.log('reconnected');
+         clearInterval(interval);
+      };
+   }, 5000);
 }
 function processMessages() {
    for (const msg of pendingMessages) {
@@ -370,10 +384,12 @@ class Player {
             this.lastState.pos = this.serverState.pos;
             return;
          }
-         this.lastState.pos.x = lerp(this.lastState.pos.x, this.serverState.pos.x, time);
-         this.lastState.pos.y = lerp(this.lastState.pos.y, this.serverState.pos.y, time);
-         this.x = lerp(this.x, this.lastState.pos.x, time);
-         this.y = lerp(this.y, this.lastState.pos.y, time);
+         /* this.lastState.pos.x = lerp(this.lastState.pos.x, this.serverState.pos.x, time);
+         this.lastState.pos.y = lerp(this.lastState.pos.y, this.serverState.pos.y, time);*/
+         this.pos.x = lerp(this.pos.x, this.serverState.pos.x, time);
+         this.pos.y = lerp(this.pos.y, this.serverState.pos.y, time);
+         this.x = lerp(this.x, this.pos.x, time);
+         this.y = lerp(this.y, this.pos.y, time);
       } else {
          const time = delta * 10;
          if (delta >= 1 / 10) {
