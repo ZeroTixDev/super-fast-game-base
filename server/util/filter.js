@@ -17,7 +17,7 @@ module.exports = {
          'sucks',
       ];
       let newMessage = message.toString();
-      const msg = msg.trim().toLowerCase();
+      const msg = newMessage.trim().toLowerCase();
       for (const bad of badWords) {
          if (msg.includes(bad)) {
             newMessage = 'BONK';
