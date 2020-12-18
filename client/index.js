@@ -78,12 +78,14 @@ function join() {
                   alert(
                      'You have lost connection to the game server. Try refreshing or checking your internet connection.'
                   );
+                  return;
                }
             }
+         } else {
+            clearInterval(interval);
+            console.log('successfully joined');
+            return;
          }
-         clearInterval(interval);
-         console.log('successfully joined');
-         return;
       }
       const payload = Object.create(null);
       payload[encode('type')] = 'join';
@@ -119,9 +121,8 @@ function recon(data, player) {
          j++;
       }
    }
-   players[selfId].pos.x = lerp(oldPos.x, players[selfId].pos.x, 0.4);
-   players[selfId].pos.y = lerp(oldPos.y, players[selfId].pos.y, 0.4);
-   if (Math.random() > 0.85) console.log(pendingInputs.length);
+   players[selfId].pos.x = lerp(oldPos.x, players[selfId].pos.x, 0.3);
+   players[selfId].pos.y = lerp(oldPos.y, players[selfId].pos.y, 0.3);
    /* let j = 0;
    while (j < pendingInputs.length) {
       const input = pendingInputs[j];

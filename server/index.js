@@ -88,6 +88,7 @@ function sendState(clients) {
    initPack = [];
    removePack = [];
 }
+console.log(joinRecent);
 wss.on('connection', (ws) => {
    const clientId = getId(players);
    let joined = false;
@@ -97,6 +98,7 @@ wss.on('connection', (ws) => {
          const data = JSON.parse(msg);
          if (validateMessage(data, { joined, tick })) {
             if (data[encode('type')] === 'join') {
+               console.log(joinRecent);
                if (!triedJoin && joinRecent < 10) {
                   joinRecent++;
                   setTimeout(() => {

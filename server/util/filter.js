@@ -11,17 +11,18 @@ module.exports = {
          'semen',
          'cunt',
          'whore',
-         'ass',
+         'pussy',
          'moan',
          'fap',
-         'dumb',
-         'idiot',
-         'noob',
-         'suck',
+         'sucks',
       ];
+      let newMessage = message.toString();
+      const msg = msg.trim().toLowerCase();
       for (const bad of badWords) {
-         message = message.replace(new RegExp(`${bad}`, 'gi'), 'BONK');
+         if (msg.includes(bad)) {
+            newMessage = 'BONK';
+         }
       }
-      return message;
+      return newMessage;
    },
 };
