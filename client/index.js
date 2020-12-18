@@ -67,6 +67,7 @@ function recon(data, player) {
       }
    }
    // const clientPos = history.find((object) => object.tick === data[lastProcessEncoded]).state.player.pos;
+   const oldPos = players[selfId].pos;
    players = history.find((object) => object.tick === data[lastProcessEncoded]).state.players;
    players[selfId].pos = data[posEncoded];
    let j = 0;
@@ -82,7 +83,9 @@ function recon(data, player) {
          j++;
       }
    }
-   if (Math.random() > 0.8) console.log(pendingInputs.length);
+   players[selfId].pos.x = lerp(oldPos.x, players[selfId].pos.x, 0.1);
+   players[selfId].pos.y = lerp(oldPos.y, players[selfId].pos.y, 0.1);
+   if (Math.random() > 0.85) console.log(pendingInputs.length);
    /* let j = 0;
    while (j < pendingInputs.length) {
       const input = pendingInputs[j];
