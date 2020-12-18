@@ -8,8 +8,8 @@ const { simulatePlayer } = require('.././shared/simulate');
 let ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
 ws.binaryType = 'arraybuffer';
 ws.onclose = function () {
-   reconnect();
    isJoined = false;
+   reconnect();
 };
 const game = document.getElementById('game');
 const canvas = document.getElementById('canvas');
@@ -119,8 +119,8 @@ function recon(data, player) {
          j++;
       }
    }
-   players[selfId].pos.x = lerp(oldPos.x, players[selfId].pos.x, 0.7);
-   players[selfId].pos.y = lerp(oldPos.y, players[selfId].pos.y, 0.7);
+   players[selfId].pos.x = lerp(oldPos.x, players[selfId].pos.x, 0.4);
+   players[selfId].pos.y = lerp(oldPos.y, players[selfId].pos.y, 0.4);
    if (Math.random() > 0.85) console.log(pendingInputs.length);
    /* let j = 0;
    while (j < pendingInputs.length) {
@@ -159,7 +159,9 @@ function recon(data, player) {
    }*/
 }
 function reconnect() {
+   let t = 0;
    const interval = setInterval(() => {
+      t++;
       ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
       ws.binaryType = 'arraybuffer';
       console.log('attempting to reconnect');
@@ -168,6 +170,9 @@ function reconnect() {
          join();
          clearInterval(interval);
       };
+      if (t > 4) {
+         clearInterval(interval);
+      }
    }, 5000);
 }
 function processMessages() {
