@@ -83,8 +83,8 @@ function recon(data, player) {
          j++;
       }
    }
-   players[selfId].pos.x = lerp(oldPos.x, players[selfId].pos.x, 0.1);
-   players[selfId].pos.y = lerp(oldPos.y, players[selfId].pos.y, 0.1);
+   players[selfId].pos.x = lerp(oldPos.x, players[selfId].pos.x, 0.4);
+   players[selfId].pos.y = lerp(oldPos.y, players[selfId].pos.y, 0.4);
    if (Math.random() > 0.85) console.log(pendingInputs.length);
    /* let j = 0;
    while (j < pendingInputs.length) {
