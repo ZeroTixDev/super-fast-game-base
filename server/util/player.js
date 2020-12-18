@@ -25,11 +25,9 @@ module.exports = class Player {
       this.sendingMsg = this.chatMsg;
       this.friction = 0.82;
       this.lastProcessedTick = 0;
-      this.minTick = 0;
    }
    decodeKeys(inputs) {
       for (const object of inputs) {
-         this.minTick = Math.min(this.minTick, object.tick);
          this.pendingInputs.push({ input: object.input, tick: object.tick });
       }
    }
@@ -111,11 +109,14 @@ module.exports = class Player {
       return object;
    }
    update(arena, players) {
-      while (this.pendingInputs.length >= 1) {
-         simulatePlayer({ players, id: this.id, arena }, this.pendingInputs[0].input);
-         this.pos.round();
-         if (this.pendingInputs.length === 1) this.lastProcessedTick = this.pendingInputs[0].tick;
-         this.pendingInputs.shift();
+      if (this.pendingInputs.length === 0) {
+         simulatePlayer({ players, id: this.id, arena }, { up: false, down: false, left: false, right: false });
+      } else {
+         while (this.pendingInputs.length >= 1) {
+            simulatePlayer({ players, id: this.id, arena }, this.pendingInputs[0].input);
+            if (this.pendingInputs.length === 1) this.lastProcessedTick = this.pendingInputs[0].tick;
+            this.pendingInputs.shift();
+         }
       }
       /*this.vel.y *= Math.pow(this.friction, delta * 60)*/
       /*this.vel.x *= Math.pow(this.friction, delta * 60)*/

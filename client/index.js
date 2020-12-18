@@ -8,7 +8,6 @@ const { simulatePlayer } = require('.././shared/simulate');
 const ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
 ws.binaryType = 'arraybuffer';
 const game = document.getElementById('game');
-const players = Object.create(null);
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const chatBox = document.getElementById('chatBox');
@@ -25,6 +24,7 @@ let bytes = 0;
 let tick = 0;
 let updates = 0;
 let debugMode = false;
+let players = Object.create(null);
 const start = Date.now();
 let byteDisplay = 0;
 const PLAYER_COLOR = '#242424';
@@ -66,8 +66,9 @@ function recon(data, player) {
          history.splice(i, 1);
       }
    }
-   const clientPos = history.find((object) => object.tick === data[lastProcessEncoded]).state.player.pos;
-   player.pos = data[posEncoded];
+   // const clientPos = history.find((object) => object.tick === data[lastProcessEncoded]).state.player.pos;
+   players = history.find((object) => object.tick === data[lastProcessEncoded]).state.players;
+   players[selfId].pos = data[posEncoded];
    let j = 0;
    while (j < pendingInputs.length) {
       const input = pendingInputs[j];
@@ -78,11 +79,10 @@ function recon(data, player) {
       } else {
          // Not processed by the server yet. Re-apply it.
          simulatePlayer({ players, id: selfId, arena }, input.input);
-         history.find((object) => object.tick === input.tick - 1).state = { player: players[selfId], arena };
          j++;
       }
    }
-   if (Math.random() > 0.7) console.log(pendingInputs.length);
+   if (Math.random() > 0.8) console.log(pendingInputs.length);
    /* let j = 0;
    while (j < pendingInputs.length) {
       const input = pendingInputs[j];
@@ -285,7 +285,7 @@ function update(delta) {
    const inputs = [];
    while (tick < expectedTick) {
       inputs.push({ input: key, tick });
-      history.push({ tick, state: { player: players[selfId], arena } });
+      history.push({ tick, state: { players, arena } });
       simulatePlayer({ players, id: selfId, arena }, key);
       pendingInputs.push({ input: key, tick });
       tick++;
