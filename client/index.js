@@ -94,7 +94,7 @@ function join() {
    attempt();
    const interval = setInterval(attempt, 2000);
 }
-console.log('correction... 65');
+console.log('correction... v7');
 function recon(data, player) {
    const lastProcessEncoded = encode('lastProcessedTick');
    const posEncoded = encode('pos');
