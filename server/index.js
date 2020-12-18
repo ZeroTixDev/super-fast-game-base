@@ -4,7 +4,7 @@ const express = require('express');
 const WebSocket = require('ws');
 const app = express();
 const wss = new WebSocket.Server({ noServer: true });
-const server = app.listen(process.env.PORT || 4000, () => console.log('Server running at port 4000'));
+const server = app.listen(process.env.PORT || 8080, () => console.log('Server running at port 8080'));
 const path = require('path');
 const Player = require('./util/player');
 const Vector = require('./util/vector');

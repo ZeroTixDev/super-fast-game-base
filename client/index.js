@@ -59,14 +59,44 @@ setInterval(() => {
 console.log('correction... v5');
 function recon(data, player) {
    const lastProcessEncoded = encode('lastProcessedTick');
+   const posEncoded = encode('pos');
    for (let i = history.length - 1; i >= 0; i--) {
       const object = history[i];
       if (object.tick < data[lastProcessEncoded]) {
          history.splice(i, 1);
       }
    }
-   const correctPos = history.find((object) => object.tick === data[lastProcessEncoded]).state.player.pos;
-   player.correctPosition.pos = correctPos;
+   const clientPos = history.find((object) => object.tick === data[lastProcessEncoded]).state.player.pos;
+   player.pos = data[posEncoded];
+   let j = 0;
+   while (j < pendingInputs.length) {
+      const input = pendingInputs[j];
+      if (input.tick <= data[lastProcessEncoded]) {
+         // Already processed. Its effect is already taken into account into the world update
+         // we just got, so we can drop it.
+         pendingInputs.splice(j, 1);
+      } else {
+         // Not processed by the server yet. Re-apply it.
+         simulatePlayer({ players, id: selfId, arena }, input.input);
+         history.find((object) => object.tick === input.tick - 1).state = { player: players[selfId], arena };
+         j++;
+      }
+   }
+   if (Math.random() > 0.7) console.log(pendingInputs.length);
+   /* let j = 0;
+   while (j < pendingInputs.length) {
+      const input = pendingInputs[j];
+      if (input.tick <= data.lastProcessedTick) {
+         // Already processed. Its effect is already taken into account into the world update
+         // we just got, so we can drop it.
+         pendingInputs.splice(j, 1);
+      } else {
+         // Not processed by the server yet. Re-apply it.
+         history[input.tick] = { tick: input.tick, state: { player: players[selfId], arena } };
+         simulatePlayer({ players, id: selfId, arena }, input.input);
+         j++;
+      }
+   }*/
    /*if (predictedPlayerPos.x !== data.pos.x || predictedPlayerPos.y !== data.pos.y) {
       console.log('predicted object', history.find((object) => object.tick === data.lastProcessedTick).state);
       console.log('tick', tick, 'server tick', data.lastProcessedTick);
@@ -257,7 +287,7 @@ function update(delta) {
       inputs.push({ input: key, tick });
       history.push({ tick, state: { player: players[selfId], arena } });
       simulatePlayer({ players, id: selfId, arena }, key);
-      //pendingInputs.push({ input: key, tick });
+      pendingInputs.push({ input: key, tick });
       tick++;
       updates++;
    }

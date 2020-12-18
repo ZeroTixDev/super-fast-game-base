@@ -25,9 +25,11 @@ module.exports = class Player {
       this.sendingMsg = this.chatMsg;
       this.friction = 0.82;
       this.lastProcessedTick = 0;
+      this.minTick = 0;
    }
    decodeKeys(inputs) {
       for (const object of inputs) {
+         this.minTick = Math.min(this.minTick, object.tick);
          this.pendingInputs.push({ input: object.input, tick: object.tick });
       }
    }
