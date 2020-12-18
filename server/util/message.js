@@ -6,9 +6,11 @@ module.exports = {
          if (info.joined) return false;
       }
       if (data.type === 'input') {
+         if (!info.joined) return false;
          if (data.tick > info.tick) return false;
       }
       if (data.type === 'chat') {
+         if (!info.joined) return false;
          if (data.value.length > 1000) return false;
       }
       return true;

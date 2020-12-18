@@ -9,10 +9,15 @@ let ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
 ws.binaryType = 'arraybuffer';
 ws.onclose = function () {
    reconnect();
+   isJoined = false;
 };
 const game = document.getElementById('game');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+ctx.font = '100px Arial';
+ctx.textAlign = 'center';
+ctx.fillStyle = 'white';
+ctx.fillText('Connecting...', window.innerWidth / 2, window.innerHeight / 2 + 100);
 const chatBox = document.getElementById('chatBox');
 const chatHolder = document.getElementById('chatHolder');
 let arena = null;
@@ -36,13 +41,12 @@ let key = { left: false, right: false, up: false, down: false };
 const pendingInputs = [];
 const history = [];
 let pendingMessages = [];
+let isJoined = false;
 let scale = resize(canvas);
 window.addEventListener('resize', () => (scale = resize(canvas)));
 window.requestAnimationFrame(loop);
 ws.onopen = () => {
-   const payload = Object.create(null);
-   payload[encode('type')] = 'join';
-   ws.send(JSON.stringify(payload));
+   join();
    window.addEventListener('keydown', trackKeys);
    window.addEventListener('keyup', trackKeys);
    document.getElementById('loading').style.display = 'none';
@@ -59,6 +63,35 @@ setInterval(() => {
    console.log(updates, 'updates per second');
    updates = 0;
 }, 1000);
+function join() {
+   let t = 0;
+   function attempt() {
+      t++;
+      console.log('attempting to join');
+      if (isJoined || t > 5) {
+         if (t > 5) {
+            const answer = prompt('Do you want to try to connect again?').trim().toLowerCase();
+            if (!isJoined) {
+               if (answer === 'y') {
+                  t = 0;
+               } else {
+                  alert(
+                     'You have lost connection to the game server. Try refreshing or checking your internet connection.'
+                  );
+               }
+            }
+         }
+         clearInterval(interval);
+         console.log('successfully joined');
+         return;
+      }
+      const payload = Object.create(null);
+      payload[encode('type')] = 'join';
+      ws.send(JSON.stringify(payload));
+   }
+   attempt();
+   const interval = setInterval(attempt, 2000);
+}
 console.log('correction... 65');
 function recon(data, player) {
    const lastProcessEncoded = encode('lastProcessedTick');
@@ -132,6 +165,7 @@ function reconnect() {
       console.log('attempting to reconnect');
       ws.onopen = function () {
          console.log('reconnected');
+         join();
          clearInterval(interval);
       };
    }, 5000);
@@ -141,10 +175,12 @@ function processMessages() {
       const selfIdEncoded = encode('selfId');
       if (msg[selfIdEncoded]) {
          selfId = msg[selfIdEncoded];
+         isJoined = true;
       }
       const arenaEncoded = encode('arena');
       if (msg[arenaEncoded]) {
          arena = msg[arenaEncoded];
+         isJoined = true;
       }
       const lavaColorEncoded = encode('lavaColor');
       if (msg[lavaColorEncoded]) {
@@ -155,6 +191,7 @@ function processMessages() {
          for (const data of msg[initPackEncoded]) {
             new Player(data);
          }
+         isJoined = true;
       }
       if (selfId && players[selfId]) {
          //update code
@@ -377,8 +414,8 @@ class Player {
    }
    update(delta) {
       if (this.id !== selfId) {
-         const time = delta * 10;
-         if (delta >= 1 / 10) {
+         const time = delta * 20;
+         if (delta >= 1 / 20) {
             this.x = this.serverState.pos.x;
             this.y = this.serverState.pos.y;
             this.lastState.pos = this.serverState.pos;
@@ -392,8 +429,8 @@ class Player {
          this.y = lerp(this.y, this.pos.y, time);
          simulatePlayer({ players, id: this.id, arena }, { up: false, down: false, right: false, left: false });
       } else {
-         const time = delta * 10;
-         if (delta >= 1 / 10) {
+         const time = delta * 20;
+         if (delta >= 1 / 20) {
             this.x = this.pos.x;
             this.y = this.pos.y;
             return;

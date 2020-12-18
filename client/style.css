@@ -19,7 +19,7 @@ body {
 }
 #loading {
   text-align: center;
-  margin:auto;
+  margin-top:50vh;
   font-size: 1.5rem;
 }
 #chatHolder {

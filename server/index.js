@@ -26,6 +26,8 @@ let removePack = [];
 let sendPack = null;
 let tick = 0;
 let lastLavaColor = 0;
+const joinRate = 5;
+let joinRecent = 0;
 const start = Date.now();
 app.use(express.static('dist'));
 app.use(express.static('shared'));
@@ -89,11 +91,22 @@ function sendState(clients) {
 wss.on('connection', (ws) => {
    const clientId = getId(players);
    let joined = false;
+   let triedJoin = false;
    ws.on('message', (msg) => {
       try {
          const data = JSON.parse(msg);
          if (validateMessage(data, { joined, tick })) {
             if (data[encode('type')] === 'join') {
+               if (!triedJoin && joinRecent < 10) {
+                  joinRecent++;
+                  setTimeout(() => {
+                     joinRecent--;
+                  }, 15000);
+               }
+               triedJoin = true;
+               if (joinRecent > joinRate) {
+                  return;
+               }
                joined = true;
                clients[clientId] = { ws };
                players[clientId] = new Player(clientId);
@@ -117,6 +130,9 @@ wss.on('connection', (ws) => {
       }
    });
    ws.on('close', () => {
+      setTimeout(() => {
+         joinRecent--;
+      }, 10000);
       delete clients[clientId];
       Player.onDisconnect({ id: clientId, players, removePack });
    });
