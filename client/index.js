@@ -390,6 +390,7 @@ class Player {
          this.pos.y = lerp(this.pos.y, this.serverState.pos.y, time);
          this.x = lerp(this.x, this.pos.x, time);
          this.y = lerp(this.y, this.pos.y, time);
+         simulatePlayer({ players, id: this.id, arena }, { up: false, down: false, right: false, left: false });
       } else {
          const time = delta * 10;
          if (delta >= 1 / 10) {
