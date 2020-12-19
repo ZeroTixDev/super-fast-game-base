@@ -70,15 +70,17 @@ function join() {
       console.log('attempting to join');
       if (isJoined || t > 5) {
          if (t > 5) {
-            const answer = prompt('Do you want to try to connect again?').trim().toLowerCase();
             if (!isJoined) {
-               if (answer === 'y') {
+               const answer = prompt('Do you want to try to connect again?').trim().toLowerCase();
+               if (answer === 'y' && !isJoined) {
                   t = 0;
-               } else {
+               } else if (!isJoined) {
                   alert(
                      'You have lost connection to the game server. Try refreshing or checking your internet connection.'
                   );
-                  return;
+                  clearInterval(interval);
+               } else {
+                  clearInterval(interval);
                }
             }
          } else {
