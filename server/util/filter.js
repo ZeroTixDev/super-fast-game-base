@@ -20,7 +20,7 @@ module.exports = {
       const msg = newMessage.trim().toLowerCase();
       for (const bad of badWords) {
          if (msg.includes(bad)) {
-            newMessage = 'BONK';
+            newMessage = '[DATA EXPUNGED]';
          }
       }
       return newMessage;
