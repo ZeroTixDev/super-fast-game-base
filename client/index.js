@@ -349,7 +349,7 @@ function update(delta) {
    while (tick < expectedTick) {
       inputs.push({ input: key, tick });
       history.push({ tick, state: { players, arena } });
-      simulatePlayer({ players, id: selfId, arena }, key);
+      // simulatePlayer({ players, id: selfId, arena }, key);
       pendingInputs.push({ input: key, tick });
       tick++;
       updates++;
