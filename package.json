@@ -8,7 +8,7 @@
     "dev": "webpack & nodemon server/index.js",
     "eslint": "eslint **/*.js",
     "build":"webpack",
-    "serve": "webpack serve"
+    "serve": "webpack serve",
   },
   "dependencies": {
     "express": "4.17.1",

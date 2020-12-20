@@ -16,7 +16,6 @@ module.exports = class Player {
       this.pendingInputs = [];
       this.vel = new Vector(0, 0);
       this.maxSpd = (500 * 1) / 60;
-      // spawn in...
       this.radius = 30;
       this.chatMsg = 'Hello';
       this.chatDuration = 7;
@@ -39,15 +38,15 @@ module.exports = class Player {
       }
       return initPacks;
    }
-   static onDisconnect({ id, players, removePack }) {
-      delete players[id];
-      removePack.push(id);
+   static updatePlayers({ players, arena }) {
+      const oldState = { ...players };
+      for (const i of Object.keys(players)) {
+         players[i].update(arena, oldState);
+      }
    }
-   static pack({ players, arena }) {
+   static pack(players) {
       const pack = [];
-      const playersCopy = { ...players };
       for (const i in players) {
-         players[i].update(arena, playersCopy);
          const object = players[i].getUpdatePack();
          if (Object.keys(object).length > 0) pack.push(object);
       }
@@ -55,19 +54,11 @@ module.exports = class Player {
    }
    getUpdatePack() {
       const object = Object.create(null);
-      // if (this.pos.delta(this.sendingPos) > 1) {
-      //if (!this.pos.round().equal(this.sendingPos)) {
       if (!this.pos.equal(this.sendingPos)) {
          object[encode('pos')] = { x: this.pos.round().x, y: this.pos.round().y };
          object[encode('lastProcessedTick')] = this.lastProcessedTick;
          this.sendingPos = this.pos.copy();
-      } //.delta(this.sendingPos.round()).round();
-      /*this.sendingPos.x += object[encode('pos')].x;
-         this.sendingPos.y += object[encode('pos')].y;*/
-      //  this.sendingPos = object[encode('pos')];
-      //     }
-      // console.log(object.pos);
-      //}
+      }
       if (this.chatTime > 0) {
          object[encode('chatTime')] = Math.round(this.chatTime * 100) / 100;
          if (this.chatMsg.length > 0) {
@@ -121,8 +112,6 @@ module.exports = class Player {
             this.pendingInputs.shift();
          }
       }
-      /*this.vel.y *= Math.pow(this.friction, delta * 60)*/
-      /*this.vel.x *= Math.pow(this.friction, delta * 60)*/
       this.chatTime -= 1 / 60;
       if (this.chatTime <= 0) this.chatMsg = '';
    }

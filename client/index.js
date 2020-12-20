@@ -4,7 +4,8 @@ require('./style.css');
 const msgpack = require('msgpack-lite');
 const resize = require('./resize');
 const { encode } = require('.././shared/name');
-const { simulatePlayer, lavaUpdate } = require('.././shared/simulate');
+const Lava = require('.././shared/lava');
+const { simulatePlayer } = require('.././shared/simulate');
 let ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
 ws.binaryType = 'arraybuffer';
 ws.onclose = function () {
@@ -27,7 +28,6 @@ ctx.font = '20px Verdana, Geneva, sans-serif';
 let chatlock = false;
 let enterPressed = false;
 let isChatting = false;
-let lavaColor = 107;
 let bytes = 0;
 let tick = 0;
 let updates = 0;
@@ -42,9 +42,8 @@ const pendingInputs = [];
 const history = [];
 let pendingMessages = [];
 let isJoined = false;
-let lavaUp = true;
-let lavaDown = false;
 let logData = false;
+const lava = new Lava();
 let scale = resize(canvas);
 window.addEventListener('resize', () => (scale = resize(canvas)));
 window.requestAnimationFrame(loop);
@@ -196,9 +195,9 @@ function processMessages() {
       const lavaEncoded = encode('lava');
       if (msg[lavaEncoded]) {
          console.log('got lava', msg[lavaEncoded]);
-         lavaColor = msg[lavaEncoded].lavaColor;
-         lavaUp = msg[lavaEncoded].lavaUp;
-         lavaDown = msg[lavaEncoded].lavaDown;
+         lava.color = msg[lavaEncoded].color;
+         lava.up = msg[lavaEncoded].up;
+         lava.down = msg[lavaEncoded].down;
          isJoined = true;
       }
       const initPackEncoded = encode('initPack');
@@ -304,7 +303,6 @@ function renderChat() {
    if (isChatting) {
       chatHolder.style.display = 'block';
       chatBox.focus();
-      chatBox.setAttribute('maxlength', 45);
    } else {
       if (chatBox.value !== '') {
          if (chatBox.value.trim().toLowerCase().slice(0, 5) === '/tlog') {
@@ -318,7 +316,6 @@ function renderChat() {
       }
       chatHolder.style.display = 'none';
       chatBox.value = '';
-      chatBox.setAttribute('maxlength', 45);
    }
 }
 function renderLava() {
@@ -326,7 +323,7 @@ function renderLava() {
       Math.round(arena.x / 2 - 200 - players[selfId].x + canvas.width / 2),
       Math.round(arena.y / 2 - 200 - players[selfId].y + canvas.height / 2),
    ];
-   ctx.fillStyle = `rgb(${lavaColor},124,37)`;
+   ctx.fillStyle = `rgb(${lava.color},124,37)`;
    ctx.fillRect(x, y, 400, 400);
 }
 function renderMinimap(player) {
@@ -363,10 +360,7 @@ function update(delta) {
       pendingInputs.push({ input: key, tick });
       tick++;
       updates++;
-      const newLava = lavaUpdate(lavaColor, lavaDown, lavaUp);
-      lavaColor = newLava.color;
-      lavaDown = newLava.down;
-      lavaUp = newLava.up;
+      lava.simulate();
    }
    if (inputs.length > 0) {
       const object = Object.create(null);
