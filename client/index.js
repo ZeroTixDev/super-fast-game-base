@@ -140,8 +140,8 @@ function recon(data) {
          j++;
       }
    }
-   players[selfId].pos.x = lerp(oldPos.x, players[selfId].pos.x, 0.3);
-   players[selfId].pos.y = lerp(oldPos.y, players[selfId].pos.y, 0.3);
+   players[selfId].pos.x = lerp(oldPos.x, players[selfId].pos.x, 0.05);
+   players[selfId].pos.y = lerp(oldPos.y, players[selfId].pos.y, 0.05);
    /* let j = 0;
    while (j < pendingInputs.length) {
       const input = pendingInputs[j];
