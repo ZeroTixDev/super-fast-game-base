@@ -32,7 +32,7 @@ let bytes = 0;
 let tick = 0;
 let updates = 0;
 let debugMode = false;
-let players = Object.create(null);
+const players = Object.create(null);
 const start = Date.now();
 let byteDisplay = 0;
 const PLAYER_COLOR = '#242424';
@@ -106,8 +106,9 @@ function recon(data, player) {
          history.splice(i, 1);
       }
    }
+   players[selfId].pos = data[posEncoded];
    // const clientPos = history.find((object) => object.tick === data[lastProcessEncoded]).state.player.pos;
-   const oldPos = players[selfId].pos;
+   /*  const oldPos = players[selfId].pos;
    players = history.find((object) => object.tick === data[lastProcessEncoded]).state.players;
    players[selfId].pos = data[posEncoded];
    let j = 0;
@@ -124,7 +125,7 @@ function recon(data, player) {
       }
    }
    players[selfId].pos.x = lerp(oldPos.x, players[selfId].pos.x, 0.3);
-   players[selfId].pos.y = lerp(oldPos.y, players[selfId].pos.y, 0.3);
+   players[selfId].pos.y = lerp(oldPos.y, players[selfId].pos.y, 0.3); */
    /* let j = 0;
    while (j < pendingInputs.length) {
       const input = pendingInputs[j];
