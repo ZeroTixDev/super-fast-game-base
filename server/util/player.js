@@ -114,7 +114,7 @@ module.exports = class Player {
       } else {
          while (this.pendingInputs.length >= 1) {
             simulatePlayer({ players, id: this.id, arena }, this.pendingInputs[0].input);
-            if (this.pendingInputs.length === 1) this.lastProcessedTick = this.pendingInputs[0].tick;
+            this.lastProcessedTick = this.pendingInputs[0].tick;
             this.pendingInputs.shift();
          }
       }
