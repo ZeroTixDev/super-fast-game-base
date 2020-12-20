@@ -18,7 +18,7 @@ module.exports = class Vector {
       return new Vector(Math.round(this.x), Math.round(this.y));
    }
    equal(vector) {
-      return vector.x === this.x && vector.y === this.y;
+      return vector.round().x === this.round().x && vector.round().y === this.round().y;
    }
    delta(vector) {
       return new Vector(this.x - vector.x, this.y - vector.y);

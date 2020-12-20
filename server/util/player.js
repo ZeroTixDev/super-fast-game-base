@@ -21,7 +21,7 @@ module.exports = class Player {
       this.chatMsg = 'Hello';
       this.chatDuration = 7;
       this.chatTime = 3;
-      this.sendingPos = pos.copy();
+      this.sendingPos = this.pos.copy();
       this.sendingMsg = this.chatMsg;
       this.friction = 0.82;
       this.lastProcessedTick = 0;
@@ -57,11 +57,14 @@ module.exports = class Player {
       const object = Object.create(null);
       // if (this.pos.delta(this.sendingPos) > 1) {
       //if (!this.pos.round().equal(this.sendingPos)) {
-      object[encode('pos')] = this.pos.round(); //.delta(this.sendingPos.round()).round();
+      if (!this.pos.equal(this.sendingPos)) {
+         object[encode('pos')] = { x: this.pos.round().x, y: this.pos.round().y };
+         object[encode('lastProcessedTick')] = this.lastProcessedTick;
+         this.sendingPos = this.pos.copy();
+      } //.delta(this.sendingPos.round()).round();
       /*this.sendingPos.x += object[encode('pos')].x;
          this.sendingPos.y += object[encode('pos')].y;*/
       //  this.sendingPos = object[encode('pos')];
-      object[encode('lastProcessedTick')] = this.lastProcessedTick;
       //     }
       // console.log(object.pos);
       //}
@@ -104,7 +107,7 @@ module.exports = class Player {
       object[encode('maxSpd')] = this.maxSpd;
       object[encode('chatTime')] = Math.round(this.chatTime * 100) / 100;
       object[encode('chatMsg')] = this.chatMsg;
-      object[encode('pos')] = this.pos.round();
+      object[encode('pos')] = { x: this.pos.round().x, y: this.pos.round().y };
       object[encode('id')] = this.id;
       return object;
    }

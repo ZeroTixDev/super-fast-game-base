@@ -42,4 +42,17 @@ function simulatePlayer(state, input) {
    player.pos.x = Math.round(player.pos.x);
    player.pos.y = Math.round(player.pos.y);
 }
-module.exports = { simulatePlayer };
+function lavaUpdate(lavaColor, lavaDown, lavaUp) {
+   if (lavaUp) lavaColor++;
+   if (lavaDown) lavaColor--;
+   if (lavaDown && lavaColor < 0) {
+      lavaDown = false;
+      lavaUp = true;
+   }
+   if (lavaUp && lavaColor > 255) {
+      lavaUp = false;
+      lavaDown = true;
+   }
+   return { color: lavaColor, up: lavaUp, down: lavaDown };
+}
+module.exports = { simulatePlayer, lavaUpdate };

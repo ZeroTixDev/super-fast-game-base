@@ -1,6 +1,6 @@
 'use strict';
 const pairs = {
-   lavaColor: 'l',
+   lava: 'l',
    selfId: 's',
    newData: 'n',
    initPack: 'e',

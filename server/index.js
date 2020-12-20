@@ -13,19 +13,22 @@ const { filterMessage } = require('./util/filter');
 const { getId } = require('./util/id');
 const { encode } = require('.././shared/name');
 const { validateMessage } = require('./util/message');
+const { lavaUpdate } = require('.././shared/simulate');
 const clients = {};
 const players = {};
 const arena = new Vector(1000, 1000);
-const sendRate = 30;
+const sendRate = 50;
 const updateRate = 60;
+// eslint-disable-next-line prefer-const
 let lavaColor = 107;
+// eslint-disable-next-line prefer-const
 let lavaUp = true;
+// eslint-disable-next-line prefer-const
 let lavaDown = false;
 let initPack = [];
 let removePack = [];
 let sendPack = null;
 let tick = 0;
-let lastLavaColor = 0;
 const joinRate = 5;
 let joinRecent = 0;
 const start = Date.now();
@@ -43,26 +46,24 @@ server.on('upgrade', (request, socket, head) => {
    });
 });
 function gameUpdate() {
+   function updateLava() {
+      const newLava = lavaUpdate(lavaColor, lavaDown, lavaUp);
+      lavaColor = newLava.color;
+      lavaDown = newLava.down;
+      lavaUp = newLava.up;
+   }
    tick++;
    const expectedTick = Math.ceil((Date.now() - start) / updateRate);
    //const playerArray = Object.entries({...players})
    //Player.collision({playerArray, players})
    let pack = Player.pack({ players, arena });
+   updateLava();
    while (tick < expectedTick) {
       pack = Player.pack({ players, arena });
+      updateLava();
       tick++;
    }
    sendPack = pack;
-   if (lavaUp) lavaColor++;
-   if (lavaDown) lavaColor--;
-   if (lavaDown && lavaColor < 0) {
-      lavaDown = false;
-      lavaUp = true;
-   }
-   if (lavaUp && lavaColor > 255) {
-      lavaUp = false;
-      lavaDown = true;
-   }
 }
 function sendState(clients) {
    if (!sendPack) return;
@@ -70,8 +71,6 @@ function sendState(clients) {
       const clientSocket = clients[i].ws;
       if (clientSocket.readyState === WebSocket.OPEN) {
          const object = Object.create(null);
-         const lavaDelta = lavaColor - lastLavaColor;
-         object[encode('lavaColor')] = lavaDelta;
          if (sendPack.length > 0) {
             object[encode('newData')] = sendPack;
          }
@@ -81,16 +80,17 @@ function sendState(clients) {
          if (removePack.length > 0) {
             object[encode('removePack')] = [...removePack];
          }
-         clientSocket.send(msgpack.encode(object));
+         if (Object.keys(object).length > 0) {
+            clientSocket.send(msgpack.encode(object));
+         }
       }
    }
-   lastLavaColor = lavaColor;
    initPack = [];
    removePack = [];
 }
-console.log(joinRecent);
+
 wss.on('connection', (ws) => {
-   const clientId = getId(players);
+   const clientId = getId(Object.keys(players));
    let joined = false;
    let triedJoin = false;
    ws.on('message', (msg) => {
@@ -98,7 +98,6 @@ wss.on('connection', (ws) => {
          const data = JSON.parse(msg);
          if (validateMessage(data, { joined, tick })) {
             if (data[encode('type')] === 'join') {
-               console.log(joinRecent);
                if (!triedJoin && joinRecent < 10) {
                   joinRecent++;
                   setTimeout(() => {
@@ -117,6 +116,7 @@ wss.on('connection', (ws) => {
                object[encode('arena')] = arena;
                object[encode('initPack')] = [...Player.getAllInitPack(players)];
                object[encode('selfId')] = clientId;
+               object[encode('lava')] = { lavaColor, lavaUp, lavaDown };
                ws.send(msgpack.encode(object));
             } else if (data[encode('inputs')]) {
                players[clientId].decodeKeys(data[encode('inputs')]);
@@ -125,7 +125,7 @@ wss.on('connection', (ws) => {
                players[clientId].chatTime = players[clientId].chatDuration;
             }
          } else {
-            console.log('not valid');
+            console.log('not valid', data);
          }
       } catch (err) {
          console.log(err);

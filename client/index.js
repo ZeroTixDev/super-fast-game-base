@@ -4,7 +4,7 @@ require('./style.css');
 const msgpack = require('msgpack-lite');
 const resize = require('./resize');
 const { encode } = require('.././shared/name');
-const { simulatePlayer } = require('.././shared/simulate');
+const { simulatePlayer, lavaUpdate } = require('.././shared/simulate');
 let ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
 ws.binaryType = 'arraybuffer';
 ws.onclose = function () {
@@ -32,7 +32,7 @@ let bytes = 0;
 let tick = 0;
 let updates = 0;
 let debugMode = false;
-const players = Object.create(null);
+let players = Object.create(null);
 const start = Date.now();
 let byteDisplay = 0;
 const PLAYER_COLOR = '#242424';
@@ -42,6 +42,9 @@ const pendingInputs = [];
 const history = [];
 let pendingMessages = [];
 let isJoined = false;
+let lavaUp = true;
+let lavaDown = false;
+let logData = false;
 let scale = resize(canvas);
 window.addEventListener('resize', () => (scale = resize(canvas)));
 window.requestAnimationFrame(loop);
@@ -64,40 +67,54 @@ setInterval(() => {
    updates = 0;
 }, 1000);
 function join() {
-   let t = 0;
-   function attempt() {
-      t++;
+   function attempt(n) {
       console.log('attempting to join');
-      if (isJoined || t > 5) {
-         if (t > 5) {
-            if (!isJoined) {
-               const answer = prompt('Do you want to try to connect again?').trim().toLowerCase();
-               if (answer === 'y' && !isJoined) {
-                  t = 0;
-               } else if (!isJoined) {
-                  alert(
-                     'You have lost connection to the game server. Try refreshing or checking your internet connection.'
-                  );
-                  clearInterval(interval);
-               } else {
-                  clearInterval(interval);
-               }
-            }
-         } else {
-            clearInterval(interval);
-            console.log('successfully joined');
-            return;
-         }
+      if (isJoined) {
+         console.log('successfully joined');
+         return;
       }
       const payload = Object.create(null);
       payload[encode('type')] = 'join';
       ws.send(JSON.stringify(payload));
+      if (n !== 0 && n % 5 === 0) {
+         const answer = prompt('Do you want to try to connect again?').trim().toLowerCase();
+         if (!isJoined) {
+            if (answer !== 'y') {
+               return alert('You have lost connection to the game server. -ZeroTix');
+            }
+         } else {
+            return;
+         }
+      }
+      setTimeout(() => {
+         attempt(n + 1);
+      }, 5000);
    }
-   attempt();
-   const interval = setInterval(attempt, 2000);
+   attempt(0);
 }
-console.log('correction... v8');
-function recon(data, player) {
+function reconnect() {
+   let connected = false;
+   function tryConnect() {
+      if (connected) {
+         console.log('successfully reconnected');
+         return;
+      }
+      ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
+      ws.binaryType = 'arraybuffer';
+      console.log('attempting to reconnect');
+      ws.onopen = function () {
+         console.log('reconnected');
+         connected = true;
+         join();
+      };
+      setTimeout(() => {
+         tryConnect();
+      }, 5000);
+   }
+   tryConnect();
+}
+console.log('correction... v9');
+function recon(data) {
    const lastProcessEncoded = encode('lastProcessedTick');
    const posEncoded = encode('pos');
    for (let i = history.length - 1; i >= 0; i--) {
@@ -106,9 +123,8 @@ function recon(data, player) {
          history.splice(i, 1);
       }
    }
-   players[selfId].pos = data[posEncoded];
    // const clientPos = history.find((object) => object.tick === data[lastProcessEncoded]).state.player.pos;
-   /*  const oldPos = players[selfId].pos;
+   const oldPos = players[selfId].pos;
    players = history.find((object) => object.tick === data[lastProcessEncoded]).state.players;
    players[selfId].pos = data[posEncoded];
    let j = 0;
@@ -125,7 +141,7 @@ function recon(data, player) {
       }
    }
    players[selfId].pos.x = lerp(oldPos.x, players[selfId].pos.x, 0.3);
-   players[selfId].pos.y = lerp(oldPos.y, players[selfId].pos.y, 0.3); */
+   players[selfId].pos.y = lerp(oldPos.y, players[selfId].pos.y, 0.3);
    /* let j = 0;
    while (j < pendingInputs.length) {
       const input = pendingInputs[j];
@@ -162,25 +178,11 @@ function recon(data, player) {
       console.log('result', player.pos);
    }*/
 }
-function reconnect() {
-   let t = 0;
-   const interval = setInterval(() => {
-      t++;
-      ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
-      ws.binaryType = 'arraybuffer';
-      console.log('attempting to reconnect');
-      ws.onopen = function () {
-         console.log('reconnected');
-         join();
-         clearInterval(interval);
-      };
-      if (t > 4) {
-         clearInterval(interval);
-      }
-   }, 5000);
-}
 function processMessages() {
    for (const msg of pendingMessages) {
+      if (logData) {
+         console.log(msg);
+      }
       const selfIdEncoded = encode('selfId');
       if (msg[selfIdEncoded]) {
          selfId = msg[selfIdEncoded];
@@ -191,9 +193,13 @@ function processMessages() {
          arena = msg[arenaEncoded];
          isJoined = true;
       }
-      const lavaColorEncoded = encode('lavaColor');
-      if (msg[lavaColorEncoded]) {
-         lavaColor += msg[lavaColorEncoded];
+      const lavaEncoded = encode('lava');
+      if (msg[lavaEncoded]) {
+         console.log('got lava', msg[lavaEncoded]);
+         lavaColor = msg[lavaEncoded].lavaColor;
+         lavaUp = msg[lavaEncoded].lavaUp;
+         lavaDown = msg[lavaEncoded].lavaDown;
+         isJoined = true;
       }
       const initPackEncoded = encode('initPack');
       if (msg[initPackEncoded]) {
@@ -217,7 +223,7 @@ function processMessages() {
                if (player) {
                   if (data[posEncoded] !== undefined) {
                      if (data[lastProcessEncoded] && selfId && arena && players[selfId] && data[idEncoded] === selfId) {
-                        recon(data, player);
+                        recon(data);
                      }
                      player.lastState = player.serverState;
                      /* player.serverState.pos.x += data[posEncoded].x;
@@ -300,11 +306,15 @@ function renderChat() {
       chatBox.focus();
       chatBox.setAttribute('maxlength', 45);
    } else {
-      if (chatBox.value !== '' && chatBox.value !== '/') {
-         const payload = Object.create(null);
-         payload[encode('value')] = chatBox.value;
-         payload[encode('type')] = 'chat';
-         ws.send(JSON.stringify(payload));
+      if (chatBox.value !== '') {
+         if (chatBox.value.trim().toLowerCase().slice(0, 5) === '/tlog') {
+            logData = !logData;
+         } else {
+            const payload = Object.create(null);
+            payload[encode('value')] = chatBox.value;
+            payload[encode('type')] = 'chat';
+            ws.send(JSON.stringify(payload));
+         }
       }
       chatHolder.style.display = 'none';
       chatBox.value = '';
@@ -349,10 +359,14 @@ function update(delta) {
    while (tick < expectedTick) {
       inputs.push({ input: key, tick });
       history.push({ tick, state: { players, arena } });
-      // simulatePlayer({ players, id: selfId, arena }, key);
+      simulatePlayer({ players, id: selfId, arena }, key);
       pendingInputs.push({ input: key, tick });
       tick++;
       updates++;
+      const newLava = lavaUpdate(lavaColor, lavaDown, lavaUp);
+      lavaColor = newLava.color;
+      lavaDown = newLava.down;
+      lavaUp = newLava.up;
    }
    if (inputs.length > 0) {
       const object = Object.create(null);
