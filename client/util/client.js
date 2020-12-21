@@ -20,25 +20,23 @@ module.exports = class Client {
       this.chatHolder = document.getElementById('chatHolder');
       this.lastTime = Date.now();
       this.key = { left: false, right: false, up: false, down: false };
-      this.chat = {
-         lock: false,
-         isChatting: false,
-      };
-      this.debug = {
-         log: false,
-         mode: false,
-         bytes: 0,
-         byteDisplay: 0,
-         updates: 0,
-      };
       this.lava = new Lava();
       this.updateRate = 60;
       this.pendingInputs = [];
       this.history = [];
       this.pendingMessages = [];
       this.isJoined = false;
+      this.logData = false;
+      this.chatLock = false;
       this.enterPressed = false;
+      this.isChatting = false;
+      this.debugMode = false;
+      this.arena = null;
+      this.selfId = null;
+      this.bytes = 0;
+      this.byteDisplay = 0;
       this.tick = 0;
+      this.updates = 0;
       this.drawLoadingScreen();
    }
    on(type, func) {
@@ -83,7 +81,7 @@ module.exports = class Client {
       if (!this.selfId) return;
       const expectedTick = Math.ceil((Date.now() - this.start) * 0.06);
       const simulateAmount = expectedTick - this.tick;
-      if (this.chat.isChatting || simulateAmount > 5) {
+      if (this.isChatting || simulateAmount > 5) {
          this.key = { left: false, right: false, up: false, down: false };
       }
       const inputs = [];
@@ -98,7 +96,7 @@ module.exports = class Client {
          this.pendingInputs.push({ input: this.key, tick: this.tick });
          this.lava.simulate();
          this.tick++;
-         this.debug.updates++;
+         this.updates++;
          amount++;
       }
       if (inputs.length > 0) {
@@ -117,10 +115,10 @@ module.exports = class Client {
    }
    trackBytes() {
       setInterval(() => {
-         this.debug.byteDisplay = this.debug.bytes / 1000;
-         this.debug.bytes = 0;
-         console.log(this.debug.updates, 'updates per second');
-         this.debug.updates = 0;
+         this.byteDisplay = this.bytes / 1000;
+         this.bytes = 0;
+         console.log(this.updates, 'updates per second');
+         this.updates = 0;
       }, 1000);
    }
    drawMap() {
@@ -132,20 +130,20 @@ module.exports = class Client {
       this.ctx.roundRect(x, y, this.arena.x, this.arena.y, 10);
    }
    drawChat() {
-      if (this.enterPressed && !this.chat.lock) {
-         this.chat.isChatting = !this.chat.isChatting;
-         this.chat.lock = true;
+      if (this.enterPressed && !this.chatlock) {
+         this.isChatting = !this.isChatting;
+         this.chatlock = true;
       }
       if (!this.enterPressed) {
-         this.chat.lock = false;
+         this.chatlock = false;
       }
-      if (this.chat.isChatting) {
+      if (this.isChatting) {
          this.chatHolder.style.display = 'block';
          this.chatBox.focus();
       } else {
          if (this.chatBox.value !== '') {
             if (this.chatBox.value.trim().toLowerCase().slice(0, 5) === '/tlog') {
-               this.debug.log = !this.debug.log;
+               this.logData = !this.logData;
             } else {
                const payload = Object.create(null);
                payload[encode('value')] = this.chatBox.value;
@@ -190,7 +188,7 @@ module.exports = class Client {
          this.players[i].draw({
             ctx: this.ctx,
             canvas: this.canvas,
-            debugMode: this.debug.mode,
+            debugMode: this.debugMode,
             center: this.players[this.selfId],
          });
       }
@@ -198,7 +196,7 @@ module.exports = class Client {
    drawBytes() {
       this.ctx.fillStyle = 'black';
       this.ctx.font = '30px Arial';
-      this.ctx.fillText(`${this.debug.byteDisplay} kbps`, this.canvas.width - 100, this.canvas.height - 50);
+      this.ctx.fillText(`${this.byteDisplay} kbps`, this.canvas.width - 100, this.canvas.height - 50);
    }
    drawGameState() {
       if (!this.selfId) return;
@@ -223,10 +221,10 @@ module.exports = class Client {
       if (index === 2) this.key.left = bool;
       if (index === 3) this.key.right = bool;
       if (event.keyCode === 13) this.enterPressed = bool;
-      if (!bool && event.keyCode === 84 && !this.chat.isChatting) {
-         this.debug.mode = !this.debug.mode;
+      if (!bool && event.keyCode === 84 && !this.isChatting) {
+         this.debugMode = !this.debugMode;
          console.log('toggled debug');
-      } else if (!bool && event.keyCode === 81 && !this.chat.isChatting) {
+      } else if (!bool && event.keyCode === 81 && !this.isChatting) {
          console.log(this);
       }
    }
@@ -264,7 +262,7 @@ module.exports = class Client {
    }
    processServerMessages() {
       for (const msg of this.pendingMessages) {
-         if (this.debug.log) {
+         if (this.logData) {
             console.log(msg);
          }
          const selfIdEncoded = encode('selfId');
@@ -283,6 +281,9 @@ module.exports = class Client {
             this.lava.color = msg[lavaEncoded].color;
             this.lava.up = msg[lavaEncoded].up;
             this.lava.down = msg[lavaEncoded].down;
+            for (let i = 0; i < this.tick; i++) {
+               this.lava.simulate();
+            }
             this.isJoined = true;
          }
          const initPackEncoded = encode('initPack');
@@ -345,7 +346,7 @@ module.exports = class Client {
    }
    addMessage(datas) {
       const msg = msgpack.decode(new Uint8Array(datas.data));
-      this.debug.bytes += datas.data.byteLength;
+      this.bytes += datas.data.byteLength;
       this.pendingMessages.push(msg);
    }
    resizeCanvas() {
