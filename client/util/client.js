@@ -242,6 +242,7 @@ module.exports = class Client {
             this.history.splice(i, 1);
          }
       }
+      const oldPos = this.players[this.selfId].pos;
       const oldPlayers = { ...this.players };
       this.players = Object.create(null);
       this.players[this.selfId] = oldPlayers[this.selfId];
@@ -258,8 +259,8 @@ module.exports = class Client {
       }
       const newPos = this.players[this.selfId].pos;
       this.players = oldPlayers;
-      this.players[this.selfId].lastState = this.players[this.selfId].serverState;
-      this.players[this.selfId].serverState.pos = newPos;
+      this.players[this.selfId].pos.x = this.lerp(oldPos.x, newPos.x, 0.05);
+      this.players[this.selfId].pos.y = this.lerp(oldPos.y, newPos.y, 0.05);
    }
    processServerMessages() {
       for (const msg of this.pendingMessages) {
@@ -316,11 +317,12 @@ module.exports = class Client {
                            data[idEncoded] === this.selfId
                         ) {
                            this.reconcile(data);
-                        } else {
-                           player.lastState = player.serverState;
-                           player.serverState.pos = data[posEncoded];
-                           player.serverState.time = Date.now();
                         }
+                        player.lastState = player.serverState;
+                        /* player.serverState.pos.x += data[posEncoded].x;
+	                     player.serverState.pos.y += data[posEncoded].y;*/
+                        player.serverState.pos = data[posEncoded];
+                        player.serverState.time = Date.now();
                      }
                      if (data[chatTimeEncoded] !== undefined) {
                         player.chatTime = data[chatTimeEncoded];
