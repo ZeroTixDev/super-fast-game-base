@@ -8,7 +8,7 @@ function lerp(a, b, t) {
 }
 
 module.exports = class Player {
-   constructor(initPack) {
+   constructor(initPack, isSelf = false) {
       const idEncoded = encode('id');
       const posEncoded = encode('pos');
       const chatTimeEncoded = encode('chatTime');
@@ -25,11 +25,12 @@ module.exports = class Player {
       this.serverState = { time: Date.now(), pos: this.pos };
       this.lastState = { time: Date.now(), pos: this.pos };
       this.correctPosition = { pos: this.pos };
+      this.isSelf = isSelf;
       this.x = this.pos.x;
       this.y = this.pos.y;
    }
-   update(delta) {
-      if (this.id !== selfId) {
+   update({ delta, players, arena }) {
+      if (!this.isSelf) {
          const time = delta * 20;
          if (delta >= 1 / 20) {
             this.x = this.serverState.pos.x;
@@ -53,21 +54,21 @@ module.exports = class Player {
          this.y = lerp(this.y, this.pos.y, time);
       }
    }
-   draw({ ctx, canvas, debugMode }) {
+   draw({ ctx, canvas, debugMode, center }) {
       const [x, y] = [
-         Math.round(this.x - players[selfId].x + canvas.width / 2),
-         Math.round(this.y - players[selfId].y + canvas.height / 2),
+         Math.round(this.x - center.x + canvas.width / 2),
+         Math.round(this.y - center.y + canvas.height / 2),
       ];
       ctx.fillStyle = PLAYER_COLOR;
       ctx.beginPath();
       ctx.arc(x, y, this.radius, 0, Math.PI * 2);
       ctx.fill();
-      if (debugMode && this.id === selfId) {
+      if (debugMode && this.isSelf) {
          ctx.fillStyle = 'blue';
          ctx.beginPath();
          const [serverX, serverY] = [
-            Math.round(this.lastState.pos.x - players[selfId].x + canvas.width / 2),
-            Math.round(this.lastState.pos.y - players[selfId].y + canvas.height / 2),
+            Math.round(this.serverState.pos.x - center.x + canvas.width / 2),
+            Math.round(this.serverState.pos.y - center.y + canvas.height / 2),
          ];
          ctx.arc(serverX, serverY, this.radius, 0, Math.PI * 2);
          ctx.fill();
@@ -76,8 +77,8 @@ module.exports = class Player {
          ctx.fillStyle = 'red';
          ctx.beginPath();
          const [correctX, correctY] = [
-            Math.round(this.correctPosition.pos.x - players[selfId].x + canvas.width / 2),
-            Math.round(this.correctPosition.pos.y - players[selfId].y + canvas.height / 2),
+            Math.round(this.correctPosition.pos.x - center.x + canvas.width / 2),
+            Math.round(this.correctPosition.pos.y - center.y + canvas.height / 2),
          ];
          ctx.arc(correctX, correctY, this.radius, 0, Math.PI * 2);
          ctx.fill();
