@@ -8,10 +8,10 @@ const Player = require('./player');
 const { getId } = require('./id');
 const { filterMessage } = require('./filter');
 module.exports = class Server {
-   constructor({ updateRate = 60, sendRate = 40 }) {
+   constructor({ updateRate = 60, sendRate = 40, arenaSize }) {
       this.clients = {};
       this.players = {};
-      this.arena = new Vector(1000, 1000);
+      this.arena = new Vector(arenaSize, arenaSize);
       this.sendRate = sendRate;
       this.updateRate = updateRate;
       this.lava = new Lava();

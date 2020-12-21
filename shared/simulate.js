@@ -4,14 +4,12 @@ function simulatePlayer(state, input) {
    // state {players, arena}
    const players = state.players;
    const player = players[state.id];
-   if (input.up && input.down) player.vel.y = 0;
-   else if (input.up) player.vel.y = -player.maxSpd;
-   else if (input.down) player.vel.y = player.maxSpd;
-   else player.vel.y = 0;
-   if (input.left && input.right) player.vel.x = 0;
-   else if (input.left) player.vel.x = -player.maxSpd;
-   else if (input.right) player.vel.x = player.maxSpd;
-   else player.vel.x = 0;
+   if (input.up && !input.down) player.vel.y -= player.maxSpd;
+   else if (input.down && !input.up) player.vel.y += player.maxSpd;
+   if (input.left && !input.right) player.vel.x -= player.maxSpd;
+   else if (input.right && !input.left) player.vel.x += player.maxSpd;
+   player.vel.x *= 0.5;
+   player.vel.y *= 0.5;
    player.pos.x += player.vel.x;
    player.pos.y += player.vel.y;
    if (player.pos.x - player.radius < 0) player.pos.x = player.radius;

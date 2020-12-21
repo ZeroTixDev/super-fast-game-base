@@ -11,7 +11,6 @@ module.exports = class Player {
    ) {
       this.id = id;
       this.pos = pos;
-      this.mvt = new Vector(0, 0);
       this.keys = keys;
       this.pendingInputs = [];
       this.vel = new Vector(0, 0);
