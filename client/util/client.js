@@ -85,7 +85,11 @@ module.exports = class Client {
          this.key = { left: false, right: false, up: false, down: false };
       }
       const inputs = [];
+      let amount = 0;
       while (this.tick < expectedTick) {
+         if (amount > 10) {
+            break;
+         }
          inputs.push({ input: this.key, tick: this.tick });
          // this.history.push({ tick: this.tick, state: { players: this.players, arena: this.arena } });
          simulatePlayer({ players: this.players, id: this.selfId, arena: this.arena }, this.key);
@@ -93,6 +97,7 @@ module.exports = class Client {
          this.lava.simulate();
          this.tick++;
          this.updates++;
+         amount++;
       }
       if (inputs.length > 0) {
          const object = Object.create(null);
