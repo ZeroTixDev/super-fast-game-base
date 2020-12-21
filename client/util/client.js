@@ -242,7 +242,6 @@ module.exports = class Client {
             this.history.splice(i, 1);
          }
       }
-      const oldPos = this.players[this.selfId].pos;
       const oldPlayers = { ...this.players };
       this.players = Object.create(null);
       this.players[this.selfId] = oldPlayers[this.selfId];
@@ -259,8 +258,7 @@ module.exports = class Client {
       }
       const newPos = this.players[this.selfId].pos;
       this.players = oldPlayers;
-      this.players[this.selfId].pos.x = this.lerp(oldPos.x, newPos.x, 0.05);
-      this.players[this.selfId].pos.y = this.lerp(oldPos.y, newPos.y, 0.05);
+      this.players[this.selfId].pos = newPos;
    }
    processServerMessages() {
       for (const msg of this.pendingMessages) {
