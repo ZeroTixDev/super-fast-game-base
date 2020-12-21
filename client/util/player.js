@@ -1,11 +1,7 @@
 'use strict';
 const { PLAYER_COLOR } = require('./constants');
-const { encode } = require('.././shared/name');
-const { simulatePlayer } = require('.././shared/simulate');
-
-function lerp(a, b, t) {
-   return (1 - t) * a + t * b;
-}
+const { encode } = require('../.././shared/name');
+const { simulatePlayer } = require('../.././shared/simulate');
 
 module.exports = class Player {
    constructor(initPack, isSelf = false) {
@@ -28,6 +24,10 @@ module.exports = class Player {
       this.isSelf = isSelf;
       this.x = this.pos.x;
       this.y = this.pos.y;
+      console.log('new player, x and y is', this.x, this.y);
+   }
+   lerp(a, b, t) {
+      return (1 - t) * a + t * b;
    }
    update({ delta, players, arena }) {
       if (!this.isSelf) {
@@ -38,10 +38,10 @@ module.exports = class Player {
             this.lastState.pos = this.serverState.pos;
             return;
          }
-         this.pos.x = lerp(this.pos.x, this.serverState.pos.x, time);
-         this.pos.y = lerp(this.pos.y, this.serverState.pos.y, time);
-         this.x = lerp(this.x, this.pos.x, time);
-         this.y = lerp(this.y, this.pos.y, time);
+         this.pos.x = this.lerp(this.pos.x, this.serverState.pos.x, time);
+         this.pos.y = this.lerp(this.pos.y, this.serverState.pos.y, time);
+         this.x = this.lerp(this.x, this.pos.x, time);
+         this.y = this.lerp(this.y, this.pos.y, time);
          simulatePlayer({ players, id: this.id, arena }, { up: false, down: false, right: false, left: false });
       } else {
          const time = delta * 20;
@@ -50,8 +50,8 @@ module.exports = class Player {
             this.y = this.pos.y;
             return;
          }
-         this.x = lerp(this.x, this.pos.x, time);
-         this.y = lerp(this.y, this.pos.y, time);
+         this.x = this.lerp(this.x, this.pos.x, time);
+         this.y = this.lerp(this.y, this.pos.y, time);
       }
    }
    draw({ ctx, canvas, debugMode, center }) {
@@ -73,7 +73,7 @@ module.exports = class Player {
          ctx.arc(serverX, serverY, this.radius, 0, Math.PI * 2);
          ctx.fill();
       }
-      if (debugMode) {
+      if (debugMode && !this.isSelf) {
          ctx.fillStyle = 'red';
          ctx.beginPath();
          const [correctX, correctY] = [

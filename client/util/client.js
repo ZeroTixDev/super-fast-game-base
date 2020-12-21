@@ -4,7 +4,8 @@ const Lava = require('../.././shared/lava');
 const { encode } = require('../.././shared/name');
 const { simulatePlayer } = require('../.././shared/simulate');
 const { PLAYER_COLOR } = require('./constants');
-const resize = require('./util/resize');
+const Player = require('./player');
+const resize = require('./resize');
 const msgpack = require('msgpack-lite');
 
 module.exports = class Client {
@@ -17,7 +18,6 @@ module.exports = class Client {
       this.resizeCanvas();
       this.chatBox = document.getElementById('chatBox');
       this.chatHolder = document.getElementById('chatHolder');
-      this.start = Date.now();
       this.lastTime = Date.now();
       this.key = { left: false, right: false, up: false, down: false };
       this.lava = new Lava();
@@ -37,20 +37,35 @@ module.exports = class Client {
       this.byteDisplay = 0;
       this.tick = 0;
       this.updates = 0;
-      this.trackBytes();
+      this.drawLoadingScreen();
+   }
+   on(type, func) {
+      this.ws.addEventListener(type, func);
    }
    applyEventListeners() {
       window.addEventListener('resize', () => {
-         resize(this.canvas);
+         this.resizeCanvas();
       });
-      this.ws.addEventListener('open', () => {
-         this.join();
-         window.addEventListener('keydown', this.trackKeys);
-         window.addEventListener('keyup', this.trackKeys);
-         document.getElementById('loading').style.display = 'none';
-         this.loop();
-         // canvas event listener move (i dont think i should add muhahagha)
-      });
+      this.ws.addEventListener(
+         'open',
+         (() => {
+            this.join();
+            this.trackBytes();
+            window.addEventListener('keydown', this.trackKeys.bind(this));
+            window.addEventListener('keyup', this.trackKeys.bind(this));
+            document.getElementById('loading').style.display = 'none';
+            this.start = Date.now();
+            this.loop();
+            console.log('client setup working...connected to game server');
+            // canvas event listener move (i dont think i should add muhahagha)
+         }).bind(this)
+      );
+   }
+   drawLoadingScreen() {
+      this.ctx.textAlign = 'center';
+      this.ctx.font = '25px sans-serif';
+      this.ctx.fillStyle = 'white';
+      this.ctx.fillText('Connecting...', window.innerWidth / 2, window.innerHeight / 2 + 25);
    }
    loop() {
       function gameLoop() {
@@ -58,13 +73,13 @@ module.exports = class Client {
          this.updateGameState((Date.now() - this.lastTime) / 1000);
          this.drawGameState();
          this.lastTime = Date.now();
-         requestAnimationFrame(gameLoop);
+         requestAnimationFrame(gameLoop.bind(this));
       }
-      requestAnimationFrame(gameLoop);
+      requestAnimationFrame(gameLoop.bind(this));
    }
    updateGameState(delta) {
-      if (!this.selfId || !this.players[this.selfId]) return;
-      const expectedTick = Math.ceil(((Date.now() - this.start) * 1000) / this.updateRate);
+      if (!this.selfId) return;
+      const expectedTick = Math.ceil((Date.now() - this.start) * 0.06);
       const simulateAmount = expectedTick - this.tick;
       if (this.isChatting || simulateAmount > 5) {
          this.key = { left: false, right: false, up: false, down: false };
@@ -72,7 +87,7 @@ module.exports = class Client {
       const inputs = [];
       while (this.tick < expectedTick) {
          inputs.push({ input: this.key, tick: this.tick });
-         this.history.push({ tick: this.tick, state: { players: this.players, arena: this.arena } });
+         // this.history.push({ tick: this.tick, state: { players: this.players, arena: this.arena } });
          simulatePlayer({ players: this.players, id: this.selfId, arena: this.arena }, this.key);
          this.pendingInputs.push({ input: this.key, tick: this.tick });
          this.lava.simulate();
@@ -85,7 +100,7 @@ module.exports = class Client {
          this.ws.send(JSON.stringify(object));
       }
       for (const i of Object.keys(this.players)) {
-         this.players[i].update(delta);
+         this.players[i].update({ delta, players: this.players, arena: this.arena });
       }
    }
    join() {
@@ -106,7 +121,7 @@ module.exports = class Client {
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       const x = Math.round(this.canvas.width / 2 - this.players[this.selfId].x);
       const y = Math.round(this.canvas.height / 2 - this.players[this.selfId].y);
-      this.ctx.fillStyle = 'rgb(210,210,210)';
+      this.ctx.fillStyle = 'rgb(190,190,190)';
       this.ctx.roundRect(x, y, this.arena.x, this.arena.y, 10);
    }
    drawChat() {
@@ -140,8 +155,11 @@ module.exports = class Client {
          Math.round(this.arena.x / 2 - 200 - this.players[this.selfId].x + this.canvas.width / 2),
          Math.round(this.arena.y / 2 - 200 - this.players[this.selfId].y + this.canvas.height / 2),
       ];
+      this.ctx.shadowColor = `rgb(${this.lava.color}, 124, 37)`;
+      this.ctx.shadowBlur = 300;
       this.ctx.fillStyle = `rgb(${this.lava.color},124,37)`;
       this.ctx.fillRect(x, y, 400, 400);
+      this.ctx.shadowBlur = 0;
    }
    drawMinimap() {
       this.ctx.fillStyle = 'rgb(60, 60, 60, 0.8)';
@@ -173,10 +191,10 @@ module.exports = class Client {
    drawBytes() {
       this.ctx.fillStyle = 'black';
       this.ctx.font = '30px Arial';
-      this.ctx.fillText(`${this.byteDisplay} kbps`, this.canvas.width - 100, this.canvas.height - 100);
+      this.ctx.fillText(`${this.byteDisplay} kbps`, this.canvas.width - 100, this.canvas.height - 50);
    }
    drawGameState() {
-      if (!this.selfId || !this.players[this.selfId]) return;
+      if (!this.selfId) return;
       this.drawChat();
       this.drawMap();
       this.drawLava();
@@ -185,7 +203,7 @@ module.exports = class Client {
       this.drawBytes();
    }
    trackKeys(event) {
-      if (!this.selfId || !this.players[this.selfId]) return;
+      if (!this.selfId) return;
       const index = [
          [87, 38],
          [83, 40],
@@ -200,15 +218,123 @@ module.exports = class Client {
       if (event.keyCode === 13) this.enterPressed = bool;
       if (!bool && event.keyCode === 84 && !this.isChatting) {
          this.debugMode = !this.debugMode;
+         console.log('toggled debug');
+      } else if (!bool && event.keyCode === 81 && !this.isChatting) {
+         console.log(this);
       }
+   }
+   lerp(a, b, t) {
+      return (1 - t) * a + t * b;
+   }
+   reconcile(data) {
+      const lastProcessEncoded = encode('lastProcessedTick');
+      const posEncoded = encode('pos');
+      for (let i = this.history.length - 1; i >= 0; i--) {
+         const object = this.history[i];
+         if (object.tick < data[lastProcessEncoded]) {
+            this.history.splice(i, 1);
+         }
+      }
+      const oldPos = this.players[this.selfId].pos;
+      const oldPlayers = { ...this.players };
+      this.players = Object.create(null);
+      this.players[this.selfId] = oldPlayers[this.selfId];
+      this.players[this.selfId].pos = data[posEncoded];
+      let j = 0;
+      while (j < this.pendingInputs.length) {
+         const input = this.pendingInputs[j];
+         if (input.tick <= data[lastProcessEncoded]) {
+            this.pendingInputs.splice(j, 1);
+         } else {
+            simulatePlayer({ players: this.players, id: this.selfId, arena: this.arena }, input.input);
+            j++;
+         }
+      }
+      const newPos = this.players[this.selfId].pos;
+      this.players = oldPlayers;
+      this.players[this.selfId].pos.x = this.lerp(oldPos.x, newPos.x, 0.05);
+      this.players[this.selfId].pos.y = this.lerp(oldPos.y, newPos.y, 0.05);
    }
    processServerMessages() {
       for (const msg of this.pendingMessages) {
          if (this.logData) {
             console.log(msg);
          }
-         //handle server stuff
+         const selfIdEncoded = encode('selfId');
+         if (msg[selfIdEncoded]) {
+            this.selfId = msg[selfIdEncoded];
+            this.isJoined = true;
+         }
+         const arenaEncoded = encode('arena');
+         if (msg[arenaEncoded]) {
+            this.arena = msg[arenaEncoded];
+            this.isJoined = true;
+         }
+         const lavaEncoded = encode('lava');
+         if (msg[lavaEncoded]) {
+            console.log('got lava', msg[lavaEncoded]);
+            this.lava.color = msg[lavaEncoded].color;
+            this.lava.up = msg[lavaEncoded].up;
+            this.lava.down = msg[lavaEncoded].down;
+            this.isJoined = true;
+         }
+         const initPackEncoded = encode('initPack');
+         if (msg[initPackEncoded]) {
+            for (const data of msg[initPackEncoded]) {
+               this.players[data[encode('id')]] = new Player(data, data[encode('id')] === this.selfId);
+            }
+            this.isJoined = true;
+         }
+         if (this.selfId && this.players[this.selfId]) {
+            //update code
+            const newDataEncoded = encode('newData');
+            if (msg[newDataEncoded]) {
+               const idEncoded = encode('id');
+               const posEncoded = encode('pos');
+               const lastProcessEncoded = encode('lastProcessedTick');
+               const chatTimeEncoded = encode('chatTime');
+               const chatMsgEncoded = encode('chatMsg');
+               const maxSpdEncoded = encode('maxSpd');
+               for (const data of msg[newDataEncoded]) {
+                  const player = this.players[data[idEncoded]];
+                  if (player) {
+                     if (data[posEncoded] !== undefined) {
+                        if (
+                           data[lastProcessEncoded] &&
+                           this.selfId &&
+                           this.arena &&
+                           this.players[this.selfId] &&
+                           data[idEncoded] === this.selfId
+                        ) {
+                           this.reconcile(data);
+                        }
+                        player.lastState = player.serverState;
+                        /* player.serverState.pos.x += data[posEncoded].x;
+	                     player.serverState.pos.y += data[posEncoded].y;*/
+                        player.serverState.pos = data[posEncoded];
+                        player.serverState.time = Date.now();
+                     }
+                     if (data[chatTimeEncoded] !== undefined) {
+                        player.chatTime = data[chatTimeEncoded];
+                     }
+                     if (data[chatMsgEncoded] !== undefined) {
+                        player.chatMsg = data[chatMsgEncoded];
+                     }
+                     if (data[maxSpdEncoded] !== undefined) {
+                        player.maxSpd = data[maxSpdEncoded];
+                     }
+                  }
+               }
+            }
+         }
+         const removePackEncoded = encode('removePack');
+         if (msg[removePackEncoded]) {
+            for (const data of msg[removePackEncoded]) {
+               delete this.players[data];
+            }
+         }
       }
+      this.pendingMessages = [];
    }
    addMessage(datas) {
       const msg = msgpack.decode(new Uint8Array(datas.data));
