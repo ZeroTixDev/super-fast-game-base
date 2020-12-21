@@ -3,6 +3,8 @@
 const Vector = require('./vector');
 const { simulatePlayer } = require('../.././shared/simulate');
 const { encode } = require('../.././shared/name');
+const { filterMessage } = require('./filter');
+
 module.exports = class Player {
    constructor(
       id,
@@ -20,9 +22,10 @@ module.exports = class Player {
       this.chatDuration = 7;
       this.chatTime = 3;
       this.sendingPos = this.pos.copy();
-      this.sendingMsg = this.chatMsg;
+      this.sendingMsg = '';
       this.friction = 0.82;
       this.lastProcessedTick = 0;
+      this.sentNewMessage = false;
    }
    decodeKeys(inputs) {
       for (const object of inputs) {
@@ -50,6 +53,11 @@ module.exports = class Player {
          if (Object.keys(object).length > 0) pack.push(object);
       }
       return pack;
+   }
+   chat({ value }) {
+      this.chatMsg = filterMessage(value);
+      this.chatTime = this.chatDuration;
+      this.sentNewMessage = false;
    }
    getUpdatePack() {
       const object = Object.create(null);

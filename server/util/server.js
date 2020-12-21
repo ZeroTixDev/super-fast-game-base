@@ -6,7 +6,7 @@ const { encode } = require('../.././shared/name');
 const msgpack = require('msgpack-lite');
 const Player = require('./player');
 const { getId } = require('./id');
-const { filterMessage } = require('./filter');
+
 module.exports = class Server {
    constructor({ updateRate = 60, sendRate = 40, arenaSize }) {
       this.clients = {};
@@ -43,8 +43,7 @@ module.exports = class Server {
          } else if (data[encode('inputs')]) {
             this.players[id].decodeKeys(data[encode('inputs')]);
          } else if (data[encode('type')] === 'chat') {
-            this.players[id].chatMsg = filterMessage(data[encode('value')]);
-            this.players[id].chatTime = this.players[id].chatDuration;
+            this.players[id].chat({ value: data[encode('value')] });
          }
       } else {
          console.log('not valid', data);
