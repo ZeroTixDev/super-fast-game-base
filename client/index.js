@@ -2,7 +2,7 @@
 
 require('./style.css');
 const msgpack = require('msgpack-lite');
-const resize = require('./resize');
+const resize = require('./util/resize');
 const { encode } = require('.././shared/name');
 const Lava = require('.././shared/lava');
 const { simulatePlayer } = require('.././shared/simulate');
@@ -12,7 +12,6 @@ ws.onclose = function () {
    isJoined = false;
    reconnect();
 };
-const game = document.getElementById('game');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 ctx.font = '100px Arial';
@@ -57,7 +56,6 @@ ws.onopen = () => {
       mouse.x = Math.round((e.pageX - t.left) / scale);
       mouse.y = Math.round((e.pageY - t.top) / scale);
    });
-   game.style.backgroundColor = 'black';
 };
 setInterval(() => {
    byteDisplay = bytes / 1000;
@@ -102,9 +100,9 @@ function reconnect() {
       ws.binaryType = 'arraybuffer';
       console.log('attempting to reconnect');
       ws.onopen = function () {
-         console.log('reconnected');
          connected = true;
-         join();
+         alert('You can now connect to the game server. Refresh.');
+         window.location.reload();
       };
       setTimeout(() => {
          tryConnect();
@@ -406,6 +404,7 @@ CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, radius) {
    this.quadraticCurveTo(x, y, x + radius, y);
    this.fill();
 };
+
 class Player {
    constructor(initPack) {
       const idEncoded = encode('id');
