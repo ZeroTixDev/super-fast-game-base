@@ -48,10 +48,14 @@ module.exports = class Player {
          if (delta >= 1 / 20) {
             this.x = this.pos.x;
             this.y = this.pos.y;
+            this.pos.x = this.serverState.pos.x;
+            this.pos.y = this.serverState.pos.y;
             return;
          }
          this.x = this.lerp(this.x, this.pos.x, time);
          this.y = this.lerp(this.y, this.pos.y, time);
+         this.pos.x = this.lerp(this.pos.x, this.serverState.pos.x, time);
+         this.pos.y = this.lerp(this.pos.y, this.serverState.pos.y, time);
       }
    }
    draw({ ctx, canvas, debugMode, center }) {
