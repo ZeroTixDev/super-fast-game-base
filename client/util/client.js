@@ -284,6 +284,9 @@ module.exports = class Client {
             this.lava.up = msg[lavaEncoded].up;
             this.lava.down = msg[lavaEncoded].down;
             this.isJoined = true;
+            for (let i = 0; i < this.tick; i++) {
+               this.lava.simulate();
+            }
          }
          const initPackEncoded = encode('initPack');
          if (msg[initPackEncoded]) {
