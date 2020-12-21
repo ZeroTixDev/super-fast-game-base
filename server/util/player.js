@@ -6,14 +6,9 @@ const { encode } = require('../.././shared/name');
 const { filterMessage } = require('./filter');
 
 module.exports = class Player {
-   constructor(
-      id,
-      pos = new Vector(30 + Math.round(Math.random() * 200), 30 + Math.round(Math.random() * 200)),
-      keys = [false, false, false, false]
-   ) {
+   constructor(id, pos = new Vector(30 + Math.round(Math.random() * 200), 30 + Math.round(Math.random() * 200))) {
       this.id = id;
       this.pos = pos;
-      this.keys = keys;
       this.pendingInputs = [];
       this.vel = new Vector(0, 0);
       this.maxSpd = (500 * 1) / 60;

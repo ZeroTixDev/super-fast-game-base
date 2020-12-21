@@ -22,6 +22,7 @@ module.exports = {
          if (msg.includes(bad)) {
             newMessage = '[DATA EXPUNGED]';
          }
+         break;
       }
       return newMessage;
    },
