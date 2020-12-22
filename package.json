@@ -6,6 +6,7 @@
   "scripts": {
     "start": "webpack & node server/index.js",
     "dev": "webpack & nodemon server/index.js",
+    "heroku-prebuild": "npm install --dev",
     "eslint": "eslint **/*.js",
     "build": "webpack",
     "serve": "webpack serve"
