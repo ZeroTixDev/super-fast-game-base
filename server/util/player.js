@@ -24,7 +24,7 @@ module.exports = class Player {
    }
    decodeKeys(inputs) {
       for (const object of inputs) {
-         this.pendingInputs.push({ input: object.input, tick: object.tick });
+         this.pendingInputs.push({ input: object.input, tick: Math.round(object.tick) });
       }
    }
 

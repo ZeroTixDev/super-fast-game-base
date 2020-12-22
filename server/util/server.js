@@ -27,6 +27,15 @@ module.exports = class Server {
          if (this.clients[id] !== undefined) return false;
       }
       if (data.type === 'input') {
+         for (const input of data[encode('inputs')]) {
+            if (
+               Math.round(input.tick) <= this.players[id].pendingInputs[this.players[id].pendingInputs.length - 1]
+                  ? this.players[id].pendingInputs[this.players[id].pendingInputs.length - 1].tick
+                  : 0
+            ) {
+               return false;
+            }
+         }
          if (this.clients[id] !== undefined) return false;
       }
       if (data.type === 'chat') {
