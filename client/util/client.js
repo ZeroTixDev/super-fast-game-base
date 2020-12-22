@@ -92,7 +92,7 @@ module.exports = class Client {
          }
          inputs.push({ input: this.key, tick: this.tick });
          // this.history.push({ tick: this.tick, state: { players: this.players, arena: this.arena } });
-         simulatePlayer({ players: this.players, id: this.selfId, arena: this.arena }, this.key);
+         //simulatePlayer({ players: this.players, id: this.selfId, arena: this.arena }, this.key);
          this.pendingInputs.push({ input: this.key, tick: this.tick });
          this.lava.simulate();
          this.tick++;
@@ -307,7 +307,7 @@ module.exports = class Client {
                   const player = this.players[data[idEncoded]];
                   if (player) {
                      if (data[posEncoded] !== undefined) {
-                        if (
+                        /*if (
                            data[lastProcessEncoded] &&
                            this.selfId &&
                            this.arena &&
@@ -315,7 +315,7 @@ module.exports = class Client {
                            data[idEncoded] === this.selfId
                         ) {
                            this.reconcile(data);
-                        }
+                        }*/
                         player.lastState = player.serverState;
                         /* player.serverState.pos.x += data[posEncoded].x;
 	                     player.serverState.pos.y += data[posEncoded].y;*/

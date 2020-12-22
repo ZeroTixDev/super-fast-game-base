@@ -30,29 +30,29 @@ module.exports = class Player {
       return (1 - t) * a + t * b;
    }
    update({ delta, players, arena }) {
-      if (!this.isSelf) {
-         const time = delta * 20;
-         if (delta >= 1 / 20) {
-            this.x = this.serverState.pos.x;
-            this.y = this.serverState.pos.y;
-            this.lastState.pos = this.serverState.pos;
-            return;
-         }
-         this.pos.x = this.lerp(this.pos.x, this.serverState.pos.x, time);
-         this.pos.y = this.lerp(this.pos.y, this.serverState.pos.y, time);
-         this.x = this.lerp(this.x, this.pos.x, time);
-         this.y = this.lerp(this.y, this.pos.y, time);
-         simulatePlayer({ players, id: this.id, arena }, { up: false, down: false, right: false, left: false });
-      } else {
-         const time = delta * 20;
+      //  if (!this.isSelf) {
+      const time = delta * 20;
+      if (delta >= 1 / 20) {
+         this.x = this.serverState.pos.x;
+         this.y = this.serverState.pos.y;
+         this.lastState.pos = this.serverState.pos;
+         return;
+      }
+      this.pos.x = this.lerp(this.pos.x, this.serverState.pos.x, time);
+      this.pos.y = this.lerp(this.pos.y, this.serverState.pos.y, time);
+      this.x = this.lerp(this.x, this.pos.x, time);
+      this.y = this.lerp(this.y, this.pos.y, time);
+      simulatePlayer({ players, id: this.id, arena }, { up: false, down: false, right: false, left: false });
+      //  } else {
+      /* const time = delta * 20;
          if (delta >= 1 / 20) {
             this.x = this.pos.x;
             this.y = this.pos.y;
             return;
          }
          this.x = this.lerp(this.x, this.pos.x, time);
-         this.y = this.lerp(this.y, this.pos.y, time);
-      }
+         this.y = this.lerp(this.y, this.pos.y, time);*/
+      //   }
    }
    draw({ ctx, canvas, debugMode, center }) {
       const [x, y] = [
