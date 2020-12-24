@@ -11,7 +11,7 @@ module.exports = class Player {
       this.pos = pos;
       this.pendingInputs = [];
       this.vel = new Vector(0, 0);
-      this.maxSpd = (500 * 1) / 60;
+      this.maxSpd = 10;
       this.radius = 30;
       this.chatMsg = 'Hello';
       this.chatDuration = 7;
@@ -52,7 +52,17 @@ module.exports = class Player {
    chat({ value }) {
       this.chatMsg = filterMessage(value);
       this.chatTime = this.chatDuration;
-      this.sentNewMessage = false;
+      const object = Object.create(null);
+      if (this.chatTime > 0) {
+         object[encode('chatTime')] = Math.round(this.chatTime * 100) / 100;
+         if (this.chatMsg.length > 0) {
+            object[encode('chatMsg')] = this.chatMsg;
+         }
+      }
+      if (Object.keys(object).length > 0) {
+         object[encode('id')] = this.id;
+      }
+      return object;
    }
    getUpdatePack() {
       const object = Object.create(null);

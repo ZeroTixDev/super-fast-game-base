@@ -59,7 +59,6 @@ module.exports = class Client {
             this.start = Date.now();
             this.loop();
             console.log('client setup working...connected to game server');
-            // canvas event listener move (i dont think i should add muhahagha)
          }).bind(this)
       );
    }
@@ -81,7 +80,7 @@ module.exports = class Client {
    }
    updateGameState(delta) {
       if (!this.selfId) return;
-      const expectedTick = Math.ceil((Date.now() - this.start) * 0.06);
+      const expectedTick = Math.ceil((Date.now() - this.start) / this.updateRate);
       const simulateAmount = expectedTick - this.tick;
       if (this.chat.isChatting || simulateAmount > 5) {
          this.key = { left: false, right: false, up: false, down: false };

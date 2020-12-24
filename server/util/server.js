@@ -43,7 +43,7 @@ module.exports = class Server {
          } else if (data[encode('inputs')]) {
             this.players[id].decodeKeys(data[encode('inputs')]);
          } else if (data[encode('type')] === 'chat') {
-            this.players[id].chat({ value: data[encode('value')] });
+            const object = this.players[id].chat({ value: data[encode('value')] });
          }
       } else {
          console.log('not valid', data);
@@ -78,28 +78,31 @@ module.exports = class Server {
       clearInterval(this.sendInterval);
       clearInterval(this.updateInterval);
    }
+   broadcast(object) {
+     for(const i of Object.keys(this.clients)) {
+       const clientSocket = this.clients[i].ws;
+       if(clientSocket.readyState === WebSocket.OPEN) {
+         clientSocket.send(msgpack.encode(object));
+       }
+     }
+   }
    sendState() {
-      if (!this.sendPack) return;
-      for (const i of Object.keys(this.clients)) {
-         const clientSocket = this.clients[i].ws;
-         if (clientSocket.readyState === WebSocket.OPEN) {
-            const object = Object.create(null);
-            if (this.sendPack.length > 0) {
-               object[encode('newData')] = this.sendPack;
-            }
-            if (this.initPack.length > 0) {
-               object[encode('initPack')] = [...this.initPack];
-            }
-            if (this.removePack.length > 0) {
-               object[encode('removePack')] = [...this.removePack];
-            }
-            if (Object.keys(object).length > 0) {
-               clientSocket.send(msgpack.encode(object));
-            }
-         }
+      if (!this.sendPack) return
+      const object = Object.create(null);
+      if (this.sendPack.length > 0) {
+         object[encode('newData')] = this.sendPack;
       }
-      this.initPack = [];
-      this.removePack = [];
+      if (this.initPack.length > 0) {
+         object[encode('initPack')] = [...this.initPack];
+      }
+      if (this.removePack.length > 0) {
+         object[encode('removePack')] = [...this.removePack];
+      }
+      if (Object.keys(object).length > 0) {
+         this.broadcast(object);
+         this.initPack = [];
+         this.removePack = [];
+      }
    }
    update() {
       this.tick++;
