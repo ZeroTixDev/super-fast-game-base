@@ -79,15 +79,15 @@ module.exports = class Server {
       clearInterval(this.updateInterval);
    }
    broadcast(object) {
-     for(const i of Object.keys(this.clients)) {
-       const clientSocket = this.clients[i].ws;
-       if(clientSocket.readyState === WebSocket.OPEN) {
-         clientSocket.send(msgpack.encode(object));
-       }
-     }
+      for (const i of Object.keys(this.clients)) {
+         const clientSocket = this.clients[i].ws;
+         if (clientSocket.readyState === WebSocket.OPEN) {
+            clientSocket.send(msgpack.encode(object));
+         }
+      }
    }
    sendState() {
-      if (!this.sendPack) return
+      if (!this.sendPack) return;
       const object = Object.create(null);
       if (this.sendPack.length > 0) {
          object[encode('newData')] = this.sendPack;

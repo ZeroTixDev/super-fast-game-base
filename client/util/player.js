@@ -31,8 +31,8 @@ module.exports = class Player {
    }
    update({ delta, players, arena }) {
       if (!this.isSelf) {
-         const time = delta * 20;
-         if (delta >= 1 / 20) {
+         const time = delta * 30;
+         if (delta >= 1 / 30) {
             this.x = this.serverState.pos.x;
             this.y = this.serverState.pos.y;
             this.lastState.pos = this.serverState.pos;
@@ -44,8 +44,8 @@ module.exports = class Player {
          this.y = this.lerp(this.y, this.pos.y, time);
          simulatePlayer({ players, id: this.id, arena }, { up: false, down: false, right: false, left: false });
       } else {
-         const time = delta * 20;
-         if (delta >= 1 / 20) {
+         const time = delta * 30;
+         if (delta >= 1 / 30) {
             this.x = this.pos.x;
             this.y = this.pos.y;
             return;

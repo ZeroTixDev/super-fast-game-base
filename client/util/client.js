@@ -56,7 +56,7 @@ module.exports = class Client {
             window.addEventListener('keydown', this.trackKeys.bind(this));
             window.addEventListener('keyup', this.trackKeys.bind(this));
             document.getElementById('loading').style.display = 'none';
-            this.start = Date.now();
+            this.start = window.performance.now();
             this.loop();
             console.log('client setup working...connected to game server');
          }).bind(this)
@@ -70,8 +70,11 @@ module.exports = class Client {
    }
    loop() {
       function gameLoop() {
-         this.processServerMessages();
+         const reconcileData = this.processServerMessages();
          this.updateGameState((Date.now() - this.lastTime) / 1000);
+         if (reconcileData != null) {
+            this.reconcile(reconcileData);
+         }
          this.drawGameState();
          this.lastTime = Date.now();
          requestAnimationFrame(gameLoop.bind(this));
@@ -80,7 +83,7 @@ module.exports = class Client {
    }
    updateGameState(delta) {
       if (!this.selfId) return;
-      const expectedTick = Math.ceil((Date.now() - this.start) / this.updateRate);
+      const expectedTick = Math.ceil((window.performance.now() - this.start) * 0.06);
       const simulateAmount = expectedTick - this.tick;
       if (this.chat.isChatting || simulateAmount > 5) {
          this.key = { left: false, right: false, up: false, down: false };
@@ -241,6 +244,7 @@ module.exports = class Client {
             this.history.splice(i, 1);
          }
       }
+      console.log('server', data[posEncoded], 'client', this.players[this.selfId].pos);
       const oldPos = this.players[this.selfId].pos;
       const oldPlayers = { ...this.players };
       this.players = Object.create(null);
@@ -262,6 +266,7 @@ module.exports = class Client {
       this.players[this.selfId].pos.y = this.lerp(oldPos.y, newPos.y, 0.05);
    }
    processServerMessages() {
+      let reconcileData = null;
       for (const msg of this.pendingMessages) {
          if (this.debug.log) {
             console.log(msg);
@@ -315,7 +320,7 @@ module.exports = class Client {
                            this.players[this.selfId] &&
                            data[idEncoded] === this.selfId
                         ) {
-                           this.reconcile(data);
+                           reconcileData = data;
                         }
                         player.lastState = player.serverState;
                         /* player.serverState.pos.x += data[posEncoded].x;
@@ -344,6 +349,7 @@ module.exports = class Client {
          }
       }
       this.pendingMessages = [];
+      return reconcileData;
    }
    addMessage(datas) {
       const msg = msgpack.decode(new Uint8Array(datas.data));
