@@ -11,14 +11,14 @@ module.exports = class Player {
       this.pos = pos;
       this.pendingInputs = [];
       this.vel = new Vector(0, 0);
-      this.maxSpd = 10;
+      this.maxSpd = 1;
       this.radius = 30;
       this.chatMsg = 'Hello';
       this.chatDuration = 7;
       this.chatTime = 3;
       this.sendingPos = this.pos.copy();
       this.sendingMsg = '';
-      this.friction = 0.82;
+      this.friction = 0.75;
       this.lastProcessedTick = 0;
       this.sentNewMessage = false;
    }

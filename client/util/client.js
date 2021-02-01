@@ -96,7 +96,7 @@ module.exports = class Client {
          }
          inputs.push({ input: this.key, tick: this.tick });
          // this.history.push({ tick: this.tick, state: { players: this.players, arena: this.arena } });
-         simulatePlayer({ players: this.players, id: this.selfId, arena: this.arena }, this.key);
+         // simulatePlayer({ players: this.players, id: this.selfId, arena: this.arena }, this.key);
          this.pendingInputs.push({ input: this.key, tick: this.tick });
          this.lava.simulate();
          this.tick++;
@@ -256,14 +256,16 @@ module.exports = class Client {
          if (input.tick <= data[lastProcessEncoded]) {
             this.pendingInputs.splice(j, 1);
          } else {
-            simulatePlayer({ players: this.players, id: this.selfId, arena: this.arena }, input.input);
+            // simulatePlayer({ players: this.players, id: this.selfId, arena: this.arena }, input.input);
             j++;
          }
       }
       const newPos = this.players[this.selfId].pos;
       this.players = oldPlayers;
-      this.players[this.selfId].pos.x = this.lerp(oldPos.x, newPos.x, 0.05);
-      this.players[this.selfId].pos.y = this.lerp(oldPos.y, newPos.y, 0.05);
+      // this.players[this.selfId].pos.x = this.lerp(oldPos.x, newPos.x, 0.05);
+      // this.players[this.selfId].pos.y = this.lerp(oldPos.y, newPos.y, 0.05);
+      this.players[this.selfId].pos.x = data[posEncoded].x;
+      this.players[this.selfId].pos.y = data[posEncoded].y;
    }
    processServerMessages() {
       let reconcileData = null;

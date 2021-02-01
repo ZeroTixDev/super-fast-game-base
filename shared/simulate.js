@@ -8,10 +8,10 @@ function simulatePlayer(state, input) {
    else if (input.down && !input.up) player.vel.y += player.maxSpd;
    if (input.left && !input.right) player.vel.x -= player.maxSpd;
    else if (input.right && !input.left) player.vel.x += player.maxSpd;
-   player.vel.x *= 0.55; // * Math.max(player.vel.x / (player.maxSpd * 5), 0.01);
-   player.vel.y *= 0.55; // * Math.max(player.vel.y / (player.maxSpd * 5), 0.01);
    player.pos.x += player.vel.x;
    player.pos.y += player.vel.y;
+   player.vel.x *= 0.9;
+   player.vel.y *= 0.9;
    if (player.pos.x - player.radius < 0) player.pos.x = player.radius;
    if (player.pos.x + player.radius > state.arena.x) player.pos.x = state.arena.x - player.radius;
    if (player.pos.y - player.radius < 0) player.pos.y = player.radius;

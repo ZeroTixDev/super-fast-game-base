@@ -42,7 +42,7 @@ module.exports = class Player {
          this.pos.y = this.lerp(this.pos.y, this.serverState.pos.y, time);
          this.x = this.lerp(this.x, this.pos.x, time);
          this.y = this.lerp(this.y, this.pos.y, time);
-         simulatePlayer({ players, id: this.id, arena }, { up: false, down: false, right: false, left: false });
+         // simulatePlayer({ players, id: this.id, arena }, { up: false, down: false, right: false, left: false });
       } else {
          const time = delta * 30;
          if (delta >= 1 / 30) {
