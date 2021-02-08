@@ -15,7 +15,7 @@ module.exports = class Client {
       this.players = Object.create(null);
       this.canvas = document.getElementById('canvas');
       this.ctx = this.canvas.getContext('2d');
-      this.resizeCanvas();
+      this.scale = this.resizeCanvas();
       this.chatBox = document.getElementById('chatBox');
       this.chatHolder = document.getElementById('chatHolder');
       this.lastTime = Date.now();
@@ -38,17 +38,18 @@ module.exports = class Client {
       this.pendingMessages = [];
       this.isJoined = false;
       this.enterPressed = false;
+      this.mouse = { x: 0, y: 0 };
       this.tick = 0;
       this.drawLoadingScreen();
    }
-   on(type, func) {
-      this.ws.addEventListener(type, func);
+   listen(type, func, element = window) {
+      element.addEventListener(type, func.bind(this));
    }
    applyEventListeners() {
-      window.addEventListener('resize', () => {
-         this.resizeCanvas();
+      this.listen('resize', () => {
+         this.scale = this.resizeCanvas();
       });
-      this.ws.addEventListener(
+      this.listen(
          'open',
          (() => {
             this.join();
@@ -59,8 +60,31 @@ module.exports = class Client {
             this.start = window.performance.now();
             this.loop();
             console.log('client setup working...connected to game server');
-         }).bind(this)
+         }).bind(this),
+         this.ws
       );
+      this.listen(
+         'mousemove',
+         (event) => {
+            const rect = this.canvas.getBoundingClientRect();
+            this.mouse.x = Math.round((event.pageX - rect.left) / this.scale);
+            this.mouse.y = Math.round((event.pageY - rect.top) / this.scale);
+            if (!this.selfId) return;
+            if (!this.players[this.selfId].mouseMode) return;
+            this.players[this.selfId].mouse = this.mouse;
+            const payload = Object.create(null);
+            payload[encode('mouse')] = { x: this.mouse.x, y: this.mouse.y };
+            this.ws.send(JSON.stringify(payload));
+         },
+         this.canvas
+      );
+      this.listen('mousedown', () => {
+         if (!this.selfId) return;
+         this.players[this.selfId].mouseMode = !this.players[this.selfId].mouseMode;
+         const payload = Object.create(null);
+         payload[encode('mousedown')] = this.players[this.selfId].mouseMode;
+         this.ws.send(JSON.stringify(payload));
+      });
    }
    drawLoadingScreen() {
       this.ctx.textAlign = 'center';
@@ -248,7 +272,7 @@ module.exports = class Client {
       const oldPos = this.players[this.selfId].pos;
       const oldPlayers = { ...this.players };
       this.players = Object.create(null);
-      this.players[this.selfId] = oldPlayers[this.selfId];
+      this.players[this.selfId] = { ...oldPlayers[this.selfId] };
       this.players[this.selfId].pos = data[posEncoded];
       let j = 0;
       while (j < this.pendingInputs.length) {
@@ -311,6 +335,7 @@ module.exports = class Client {
                const chatTimeEncoded = encode('chatTime');
                const chatMsgEncoded = encode('chatMsg');
                const maxSpdEncoded = encode('maxSpd');
+               const mouseModeEncoded = encode('mouseMode');
                for (const data of msg[newDataEncoded]) {
                   const player = this.players[data[idEncoded]];
                   if (player) {
@@ -339,6 +364,9 @@ module.exports = class Client {
                      if (data[maxSpdEncoded] !== undefined) {
                         player.maxSpd = data[maxSpdEncoded];
                      }
+                     if (data[mouseModeEncoded] !== undefined) {
+                        player.mouseMode = data[mouseModeEncoded];
+                     }
                   }
                }
             }
@@ -359,7 +387,7 @@ module.exports = class Client {
       this.pendingMessages.push(msg);
    }
    resizeCanvas() {
-      resize(this.canvas);
+      return resize(this.canvas);
    }
 };
 

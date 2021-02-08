@@ -16,6 +16,9 @@ const pairs = {
    inputs: 'u',
    type: 't',
    value: 'q',
+   mouse: '1',
+   mousedown: '2',
+   mouseMode: '3',
 };
 module.exports = {
    encode: function (name) {

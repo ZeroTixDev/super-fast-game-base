@@ -8,6 +8,10 @@ const client = new Client();
 
 client.applyEventListeners();
 
-client.on('message', (data) => {
-   client.addMessage(data);
-});
+client.listen(
+   'message',
+   (data) => {
+      client.addMessage(data);
+   },
+   client.ws
+);

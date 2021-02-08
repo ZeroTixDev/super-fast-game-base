@@ -7,7 +7,7 @@ const wss = new WebSocket.Server({ noServer: true });
 const gameServer = app.listen(process.env.PORT || 8080, () => console.log('Server running at port 8080'));
 const path = require('path');
 const Server = require('./util/server');
-const server = new Server({ updateRate: 60, sendRate: 100, arenaSize: 2000 });
+const server = new Server({ updateRate: 60, sendRate: 100, arenaSize: 1000 });
 
 app.use(express.static('dist'));
 

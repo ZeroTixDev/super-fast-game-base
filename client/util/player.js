@@ -11,12 +11,15 @@ module.exports = class Player {
       const chatMsgEncoded = encode('chatMsg');
       const maxSpdEncoded = encode('maxSpd');
       const radiusEncoded = encode('radius');
+      const mouseModeEncoded = encode('mouseMode');
       this.pos = initPack[posEncoded];
       this.radius = initPack[radiusEncoded];
       this.id = initPack[idEncoded];
       this.chatTime = initPack[chatTimeEncoded];
       this.chatMsg = initPack[chatMsgEncoded];
       this.vel = { x: 0, y: 0 };
+      this.mouse = { x: 0, y: 0 };
+      this.mouseMode = initPack[mouseModeEncoded];
       this.maxSpd = initPack[maxSpdEncoded];
       this.serverState = { time: Date.now(), pos: this.pos };
       this.lastState = { time: Date.now(), pos: this.pos };
@@ -42,7 +45,7 @@ module.exports = class Player {
          this.pos.y = this.lerp(this.pos.y, this.serverState.pos.y, time);
          this.x = this.lerp(this.x, this.pos.x, time);
          this.y = this.lerp(this.y, this.pos.y, time);
-         // simulatePlayer({ players, id: this.id, arena }, { up: false, down: false, right: false, left: false });
+         simulatePlayer({ players, id: this.id, arena }, { up: false, down: false, right: false, left: false });
       } else {
          const time = delta * 30;
          if (delta >= 1 / 30) {

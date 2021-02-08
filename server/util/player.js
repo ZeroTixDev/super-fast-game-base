@@ -11,8 +11,9 @@ module.exports = class Player {
       this.pos = pos;
       this.pendingInputs = [];
       this.vel = new Vector(0, 0);
-      this.maxSpd = 3;
+      this.maxSpd = 6;
       this.radius = 30;
+      this.mouse = { x: 0, y: 0 };
       this.chatMsg = 'Hello';
       this.chatDuration = 7;
       this.chatTime = 3;
@@ -21,6 +22,8 @@ module.exports = class Player {
       this.friction = 0.75;
       this.lastProcessedTick = 0;
       this.sentNewMessage = false;
+      this.lastMouseMode = false;
+      this.mouseMode = false;
    }
    decodeKeys(inputs) {
       for (const object of inputs) {
@@ -77,6 +80,10 @@ module.exports = class Player {
             object[encode('chatMsg')] = this.chatMsg;
          }
       }
+      if (this.lastMouseMode !== this.mouseMode) {
+         object[encode('mouseMode')] = this.mouseMode;
+         this.lastMouseMode = this.mouseMode;
+      }
       if (Object.keys(object).length > 0) {
          object[encode('id')] = this.id;
       }
@@ -112,6 +119,7 @@ module.exports = class Player {
       object[encode('chatMsg')] = this.chatMsg;
       object[encode('pos')] = { x: this.pos.round().x, y: this.pos.round().y };
       object[encode('id')] = this.id;
+      object[encode('mouseMode')] = this.mouseMode;
       return object;
    }
    update(arena, players) {

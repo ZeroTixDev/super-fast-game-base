@@ -43,7 +43,11 @@ module.exports = class Server {
          } else if (data[encode('inputs')]) {
             this.players[id].decodeKeys(data[encode('inputs')]);
          } else if (data[encode('type')] === 'chat') {
-            const object = this.players[id].chat({ value: data[encode('value')] });
+            this.players[id].chat({ value: data[encode('value')] });
+         } else if (data[encode('mouse')]) {
+            this.players[id].mouse = data[encode('mouse')];
+         } else if (data[encode('mousedown')] !== undefined) {
+            this.players[id].mouseMode = data[encode('mousedown')];
          }
       } else {
          console.log('not valid', data);
