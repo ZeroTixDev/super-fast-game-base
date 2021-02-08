@@ -244,6 +244,8 @@ module.exports = class Client {
             this.history.splice(i, 1);
          }
       }
+      this.players[this.selfId].pos = data[posEncoded];
+      /*
       console.log('server', data[posEncoded], 'client', this.players[this.selfId].pos);
       const oldPos = this.players[this.selfId].pos;
       const oldPlayers = { ...this.players };
@@ -265,7 +267,7 @@ module.exports = class Client {
       // this.players[this.selfId].pos.x = this.lerp(oldPos.x, newPos.x, 0.05);
       // this.players[this.selfId].pos.y = this.lerp(oldPos.y, newPos.y, 0.05);
       this.players[this.selfId].pos.x = data[posEncoded].x;
-      this.players[this.selfId].pos.y = data[posEncoded].y;
+      this.players[this.selfId].pos.y = data[posEncoded].y;*/
    }
    processServerMessages() {
       let reconcileData = null;
