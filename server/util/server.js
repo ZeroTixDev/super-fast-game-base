@@ -8,7 +8,7 @@ const Player = require('./player');
 const { getId } = require('./id');
 
 module.exports = class Server {
-   constructor({ updateRate = 60, sendRate = 40, arenaSize }) {
+   constructor({ updateRate = 60, sendRate = 100, arenaSize }) {
       this.clients = {};
       this.players = {};
       this.arena = new Vector(arenaSize, arenaSize);
