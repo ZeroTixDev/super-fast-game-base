@@ -38,13 +38,10 @@ module.exports = class Player {
             this.lastState.pos = this.serverState.pos;
             return;
          }
-         // this.pos.x = this.lerp(this.pos.x, this.serverState.pos.x, time);
-         // this.pos.y = this.lerp(this.pos.y, this.serverState.pos.y, time);
-         // this.x = this.lerp(this.x, this.pos.x, time);
-         // this.y = this.lerp(this.y, this.pos.y, time);
-         this.pos = this.serverState.pos;
-         this.x = this.pos.x;
-         this.y = this.pos.y;
+         this.pos.x = this.lerp(this.pos.x, this.serverState.pos.x, time);
+         this.pos.y = this.lerp(this.pos.y, this.serverState.pos.y, time);
+         this.x = this.lerp(this.x, this.pos.x, time);
+         this.y = this.lerp(this.y, this.pos.y, time);
          // simulatePlayer({ players, id: this.id, arena }, { up: false, down: false, right: false, left: false });
       } else {
          const time = delta * 30;
@@ -53,10 +50,8 @@ module.exports = class Player {
             this.y = this.pos.y;
             return;
          }
-         // this.x = this.lerp(this.x, this.pos.x, time);
-         // this.y = this.lerp(this.y, this.pos.y, time);
-         this.x = this.pos.x;
-         this.y = this.pos.y;
+         this.x = this.lerp(this.x, this.pos.x, time);
+         this.y = this.lerp(this.y, this.pos.y, time);
       }
    }
    draw({ ctx, canvas, debugMode, center }) {
