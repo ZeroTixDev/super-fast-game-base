@@ -4,10 +4,10 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "start": "npm install --dev && webpack && node server/index.js",
+    "start": "npm install --also=dev && webpack && node server/index.js",
     "dev": "webpack && nodemon server/index.js",
-    "heroku-prebuild": "npm install --dev",
-    "heroku-prestart": "npm install --dev",
+    "heroku-prebuild": "npm install --also=dev",
+    "heroku-prestart": "npm install --also=dev",
     "eslint": "eslint **/*.js",
     "build": "webpack",
     "serve": "webpack serve"
